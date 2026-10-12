@@ -1,23 +1,33 @@
+import {pairedAccent} from './design.mjs';
 // Version 1 project options are shared by the browser app and exported readers.
 export const DEFAULT_OPTIONS = Object.freeze({
-  accent:'#2563eb', font:17, width:930, radius:13, leading:1.75, background:'#f7f9fc',
+  accent:'#475569', font:17, width:930, radius:13, leading:1.75, background:'#f7f9fc',
+  dark_accent:'#64748b',dark_background:'#0d1117',logo_color:'#ffffff',dark_logo_color:'#ffffff',link_accents:true,surface:'',dark_surface:'',
+  letter_spacing:0,paragraph_spacing:18,heading_scale:1,
+  body_font:'system',heading_font:'system',print_paper:'auto',print_margin:18,print_chapters:false,
   customize:true, outline:true, contents:true, contents_open:false, search:true,
   focus:true, reading_time:true, progress:true, filename:true, footer:true, logo:true,
   metadata:true, subtitle:true, copy_code:true, section_links:true, image_zoom:true,
   table_sort:true, table_resize:true, table_scroll:true, table_rows:12, outline_depth:2,
   reading_speed:220, title_case:true, assessments:true, media:true, compact:false, remember:true,
+  bookmarks:true,resume:true,
 });
-const BOUNDS = {font:[14,22],width:[640,1320],radius:[0,28],leading:[1.55,2.05],table_rows:[3,100],outline_depth:[1,4],reading_speed:[100,500]};
+export const FONT_STACKS=Object.freeze({system:'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',serif:'Georgia,"Times New Roman",serif',mono:'ui-monospace,SFMono-Regular,Consolas,monospace'});
+export const DESIGN_KEYS=Object.freeze(['accent','background','logo_color','dark_accent','dark_background','dark_logo_color','surface','dark_surface','font','width','leading','radius','compact','letter_spacing','paragraph_spacing','heading_scale','link_accents','body_font','heading_font']);
+const ENUMS={body_font:Object.keys(FONT_STACKS),heading_font:Object.keys(FONT_STACKS),print_paper:['auto','A4','Letter']};
+const BOUNDS = {print_margin:[0,40],letter_spacing:[-.02,.08],paragraph_spacing:[8,32],heading_scale:[.85,1.35],font:[14,22],width:[640,1320],radius:[0,28],leading:[1.55,2.05],table_rows:[3,100],outline_depth:[1,4],reading_speed:[100,500]};
 export function normalizeOptions(value={}) {
   const result={...DEFAULT_OPTIONS};
   for(const [key, fallback] of Object.entries(result)) {
     const candidate=value?.[key];
+    if(ENUMS[key]){if(ENUMS[key].includes(candidate))result[key]=candidate;continue;}
     if(typeof fallback==='boolean' && typeof candidate==='boolean')result[key]=candidate;
     else if(typeof fallback==='number' && typeof candidate==='number' && Number.isFinite(candidate)) {
       const [low,high]=BOUNDS[key];
-      if(candidate>=low && candidate<=high)result[key]=key==='leading'?candidate:Math.trunc(candidate);
+      if(candidate>=low && candidate<=high)result[key]=['leading','letter_spacing','heading_scale'].includes(key)?candidate:Math.trunc(candidate);
     } else if(typeof fallback==='string' && typeof candidate==='string' && /^#[\da-f]{6}$/i.test(candidate))result[key]=candidate.toLowerCase();
   }
+  if(!value?.dark_accent&&value?.accent&&/^#[\da-f]{6}$/i.test(value.accent)&&result.accent!==DEFAULT_OPTIONS.accent)result.dark_accent=pairedAccent(result.accent,'dark');
   return result;
 }
 export const basename=path=>String(path).replace(/\\/g,'/').split('/').pop();
@@ -38,6 +48,18 @@ export function slug(value) {
   return String(value).toLowerCase().replace(/[^\p{L}\p{N}_-]+/gu,'-').replace(/^-+|-+$/g,'').slice(0,80)||'document';
 }
 const text=(value,max)=>String(value??'').slice(0,max);
+const image=value=>typeof value==='string'&&value.length<=3_000_000&&/^data:image\/(?:png|jpeg|webp|gif|avif|svg\+xml);base64,[a-z\d+/=\s]+$/i.test(value)?value:'';
+export function normalizeBranding(value={}) {
+  return {name:text(value?.name,100),footer:text(value?.footer,500),logo:image(value?.logo),favicon:image(value?.favicon)};
+}
+export function createDesignPreset(options,name='My Design') {
+  const normalized=normalizeOptions(options);
+  return {type:'compass-design',version:1,name:text(name,100),options:Object.fromEntries(DESIGN_KEYS.map(key=>[key,normalized[key]]))};
+}
+export function readDesignPreset(value) {
+  if(value?.type!=='compass-design'||value.version!==1||!value.options||typeof value.options!=='object'||Array.isArray(value.options))throw Error('Choose a Compass design preset (version 1).');
+  return createDesignPreset(value.options,value.name);
+}
 export function normalizeProject(value) {
   if(!value || typeof value!=='object' || Array.isArray(value) || (value.version??1)!==1)throw Error('This is not a supported Compass project (version 1).');
   const files=value.files??[];
@@ -45,6 +67,7 @@ export function normalizeProject(value) {
   return {
     version:1,name:text(value.name??'Untitled Publication',300).trim()||'Untitled Publication',
     title:text(value.title,300),subtitle:text(value.subtitle,2000),author:text(value.author,300),
+    id:text(value.id,100),branding:normalizeBranding(value.branding),
     mode:value.mode==='separate'?'separate':'combined',safe:value.safe!==false,chapter_titles:value.chapter_titles!==false,
     options:normalizeOptions(value.options),files:files.map(item=>{
       if(!item || typeof item!=='object' || Array.isArray(item))throw Error('Invalid document entry.');
