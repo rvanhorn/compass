@@ -6,7 +6,7 @@ The downloadable app and static demo share the same JavaScript renderer. Files a
 
 ## Get started
 
-Open **`compass.html`** in your browser. The standalone app needs no installation, Node.js, or local server to run. Use **Try Example** or **Try Two Chapters** to explore the features.
+Open **`compass.html`** in your browser. The standalone app needs no installation, Node.js, or local server to run. Use **Explore Compass** for a single-document tour or **Publishing Guide** for a two-chapter example.
 
 To build that file from this repository, install **Node.js 24.15+** and **[PNPM 12.8.1](https://pnpm.io/installation)**, then run:
 
@@ -19,7 +19,9 @@ The PNPM version is pinned in `package.json`; `pnpm-lock.yaml` records the depen
 
 Open `dist/compass.html`. Node.js is needed to build from source, not to use the finished app.
 
-Drop Markdown files or a folder into the setup screen. Arrange files, choose output and design options, then click **Preview Publication**. Settings move into a side drawer while the document takes the main pane. Changes update the preview; **Export HTML** downloads the result. Multiple separate pages download as a ZIP.
+Drop Markdown files or a folder into the setup screen. Arrange files in Files, choose output in Publish and appearance in Design, then click **Open Preview**. Settings move into a side drawer while the document takes the main pane. Changes update the preview; In Publish, choose the output and use **Download HTML** or **Download ZIP**. Multiple separate pages download as a ZIP.
+
+Use the custom Appearance menu in the header to choose **System**, **Light**, or **Dark** for the workspace and live preview. System follows your device’s appearance and is the default. Your choice is remembered in this browser independently of publication design and saved projects.
 
 ## Try the demo
 
@@ -32,7 +34,7 @@ pnpm run dev
 
 Use `http://127.0.0.1:4173/compass.html` for the empty workspace. Stop the static preview server with **Ctrl+C**; set `PORT=8765` to choose another port. The server only serves files; conversion happens in the browser.
 
-The hosted demo will be available at **[rvanhorn.github.io/compass](https://rvanhorn.github.io/compass/)** after the first push to `main` and successful deployment. Its **Download App** button downloads the standalone app for offline use.
+The hosted demo will be available at **[rvanhorn.github.io/compass](https://rvanhorn.github.io/compass/)** after the first push to `main` and successful deployment. Its **File & Export → Download Offline App** command downloads the standalone app for offline use.
 
 The demo includes Open Graph and Twitter sharing metadata, with a 1200 × 630 card at `og-card.png`. The build copies the committed PNG from `src/app/assets/`; its editable source is `src/app/assets/og-card.svg`. When changing the artwork, render the SVG to a 1200 × 630 PNG and commit both files. Sharing URLs use the `homepage` in `package.json`; update it when hosting elsewhere.
 
@@ -45,20 +47,28 @@ Run `pnpm run previews` to generate reading examples in `dist/previews/`. Open `
 ## Build a publication
 
 - **Choose content:** Drop files or folders, change chapter titles, and reorder documents.
-- **Choose output:** Export one combined HTML document or separate pages with publication navigation.
-- **Set appearance:** Choose accent and background colors, text size, width, line spacing, corners, and compact spacing.
+- **Choose output:** In Publish, select one combined HTML document or separate pages with navigation, and choose whether to show chapter titles.
+- **Set appearance:** Expand Theme Colors, Typography, or Layout. Customize light and dark accents, page and surface colors, and SVG icon colors, then adjust text size, letter and paragraph spacing, heading size, width, and corners. Linked accents automatically match hues across themes.
 - **Choose features:** Show or hide Customize, Contents, the outline, Find, Focus, reading time, progress, metadata, code-copy buttons, heading links, and more.
-- **Save a project:** Download `compass.json` containing settings, Markdown snapshots, and supplied images. Reopen it on another device to continue. Browser storage keeps a draft when available; use Save Project for a durable copy.
+- **Edit content:** Choose **Edit Markdown** from a file’s action menu for a source pane with live preview. Editing a linked file creates a local project copy and leaves its original unchanged.
+- **Reuse a design:** In Design, save or import a preset containing colors, typography, and layout without replacing content or reader features. Choose local sans, serif, or monospace families for body text and headings.
+- **Add branding:** Set a reader toolbar name, upload a logo and favicon, and customize the footer in Design → Publication Branding.
+- **Check and print:** Publish includes a persistent report for broken local links, missing images or alt text, heading gaps, and online media dependencies. Select paper size, margins, and chapter breaks; preview print styling or use **Print / Save PDF** for the complete publication.
+- **Save a project:** Download `compass.json` containing settings, Markdown snapshots, and supplied images. Reopen it on another device to continue. Browser storage keeps a draft when available; use **File & Export → Save Project** for a durable copy.
+
+Use **Undo** and **Redo** in the header for file, title, source, and setting changes. Ctrl/⌘ Z and Ctrl/⌘ Shift Z work outside text fields and inside the Markdown source editor; ordinary text fields keep their native editing shortcuts. History is kept for the current session and starts fresh when opening a project or example.
 
 Import a folder to include local images and preserve links between its Markdown files. Combined output gives chapters distinct anchors and rewrites links between included documents. Importing the same source name again updates its contents.
 
-In browsers with folder-access support, **Browse Workspace** links files to a folder you select. Linked files are reread during preview and export, with preview checks every four seconds. Other browsers offer folder import instead. Reconnect the folder after reopening a draft or an older project containing linked paths. Saving a project in the browser creates a portable snapshot of those linked files.
+In browsers with folder-access support, **Link Folder** links files to a folder you select. Linked files are reread during preview and export, with preview checks every four seconds. Other browsers offer folder import instead. Reconnect the folder after reopening a draft or an older project containing linked paths. Saving a project in the browser creates a portable snapshot of those linked files.
 
-See [all 33 options and project fields](docs/options.md) for defaults, ranges, metadata, and examples. The bundled `.compass.json` examples contain repository-relative paths; select the repository folder when opening them manually, or use the built-in example buttons.
+See [all 50 options and project fields](docs/options.md) for defaults, ranges, metadata, and examples. The bundled `.compass.json` examples contain repository-relative paths; select the repository folder when opening them manually, or use the built-in example buttons.
 
 ## Reading and Markdown
 
-Readers can customize the document, search headings with **Ctrl/⌘ K**, enter Focus mode, copy code or section links, enlarge images, and print. Contents starts collapsed; the side outline is visible by default. Tables support sorting, column resizing, and bounded scrolling for long tables. Print includes all rows.
+Readers can customize the document, search text, headings, and code across all chapters with **Ctrl/⌘ K**, enter Focus mode, copy code or section links, enlarge images, and print. Contents starts collapsed; the side outline is visible by default. Find shows highlighted snippets and jumps to the matching passage, including in separate exported pages, without an online search service. Readers can bookmark sections and resume at their last section; reading state stays local to the browser and publication when Reader Preferences is enabled. Previews do not persist reader state.
+
+Tables support sorting, column resizing, and bounded scrolling for long tables. Print includes all rows.
 
 Compass supports tables, fenced code, task lists, autolinks, strikethrough, GFM alerts, footnotes, definition lists, abbreviations, `==marked text==`, `^^inserted text^^`, superscripts, subscripts, Mermaid, and LaTeX math. YAML frontmatter accepts `title`, `subtitle` or `description`, `author`, and `date`. The title falls back to the first H1, then the filename.
 

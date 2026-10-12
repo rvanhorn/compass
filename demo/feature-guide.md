@@ -9,7 +9,7 @@ date: 2026-10-11
 
 Compass turns Markdown into a document you can read, customize, and share. This example is the source for the bundled showcase and the starting document for the local demo.
 
-Try **Customize**, search for a heading with **Ctrl/⌘ K**, and switch on **Focus**. Expand Contents to jump between sections. You can also print the document from your browser.
+Try **Customize**, search text and code with **Ctrl/⌘ K**, and switch on **Focus**. Expand Contents to jump between sections. Use **Bookmarks** to save a section locally, or **Print** to open your browser's print dialog.
 
 ## Start with a document
 
@@ -106,7 +106,7 @@ Three-column tables with Status, State, or Result as the middle header receive c
 > Mermaid diagrams and MathJax equations use online libraries when enabled. Their source stays readable if those libraries cannot load.
 
 > [!CAUTION]
-> Raw HTML is trusted by default in the command-line converter. Use `--safe` to escape it when working with unfamiliar Markdown.
+> Source HTML is escaped by default. Disable **Escape Source HTML** in Advanced Export Options only for content you trust.
 
 ## Images and local assets
 
@@ -166,6 +166,19 @@ Compass can turn repeated assessment labels into a consistent reading layout. Th
 - Cost: Examples need to be refreshed when behavior changes.
 - Us: This showcase lives in `demo/feature-guide.md`.
 - Recommendation: Use the showcase to check the browser renderer and exported reader.
+
+## Tools for publishing
+
+Open the workspace settings to try the publishing tools:
+
+- **Edit Markdown** in a file's action menu opens a source pane with live preview. Editing a linked file makes a local copy and leaves its original alone.
+- **Undo** and **Redo** restore file order, removed chapters, source edits, titles, and settings.
+- **Reusable Design** saves or imports colors, fonts, and layout independently of your content and reader features.
+- **Publication Branding** adds your toolbar name, logo, favicon, and footer. Typography offers local sans, serif, and monospace fonts for text and headings.
+- **Publication Check** in Publish reports missing images, empty alt text, broken local links, heading gaps, and online media dependencies. Select an item to visit its chapter.
+- **Print & PDF** sets paper size, margins, and chapter page breaks. Preview Print Layout shows print styling; Print / Save PDF prints the whole publication, including when downloading separate pages.
+
+Find searches paragraphs and code as well as headings. Separate exported pages include the complete publication's search index, so cross-chapter search works offline. Readers can bookmark sections and resume reading where they left off when Reader Preferences is enabled. These preferences stay in their browser; workspace previews do not persist reading state.
 
 ## Make it yours
 

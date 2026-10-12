@@ -6,8 +6,29 @@ All notable changes to Compass are recorded here, grouped by version and change 
 
 ### Added
 
+- Offline full-text publication search with highlighted snippets and destinations across combined or separate HTML pages.
+- Persistent publication checks for broken section/document links, missing images or alt text, heading gaps, and online media dependencies, with jumps to the affected chapter.
+- Session undo/redo for file, title, source, branding, design, and feature changes, including grouped typing and bounded retained history.
+- Portable appearance-only design presets, local body/heading font choices, and custom publication toolbar names, logos, favicons, and footers.
+- Per-publication local section bookmarks and resume-reading prompts, respecting disabled preference storage and direct section links.
+- Paper size, margins, chapter page breaks, print styling preview, and a complete-publication Print / Save PDF action.
+- Live Markdown source editing; changes to linked files create an undoable local snapshot without modifying source files.
+
+- A custom appearance menu with System, Light, and Dark themes for the workspace and live preview, automatic device appearance updates, and browser persistence separate from publication settings.
+- Separate light and dark palette controls, automatic accent pairing, and configurable Compass SVG colors saved with projects and exports.
+- Readable settings groups, visible described examples, a charcoal palette, custom menus, and a direct publishing flow with a persistent Download action.
+- File & Export consolidates project commands; Design and Features have separate persistent reset controls and explicit hover/focus states.
+- Letter spacing, paragraph spacing, heading size, and optional light/dark surface colors; redundant profiles and sample cards removed.
+- Smooth open/close transitions with reduced-motion support, plus in-page color pickers that dismiss on outside clicks and Escape.
+- Preview secondary surfaces derived from theme backgrounds rather than fixed blue colors.
+- Bundled Lucide icons with centered icon controls and aligned icon-and-text buttons.
+- Simplified Files hierarchy and compact reading-order rows with optional title editing and action menus; publication format and Chapter Titles now live in Publish.
 - A branded 1200 × 630 Open Graph card with static Open Graph and Twitter sharing metadata for the hosted demo.
 - A square sharing card advertised as an Open Graph alternate on the main demo URL, preserving the wide card as the preferred image; clients control image selection.
+
+### Fixed
+
+- Repeated clicks on setting labels, descriptions, and section headers no longer select text and interrupt toggling.
 
 ## 1.0.0
 
