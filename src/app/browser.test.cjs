@@ -34,7 +34,7 @@ test('downloadable single HTML initializes offline without HTTP or browser stora
     assert.equal(d.querySelectorAll('script[src],link[rel=stylesheet]').length,0);
     const notices=d.querySelector('#third-party-notices').content.textContent;
     assert.equal(notices,fs.readFileSync(path.join(root,'dist/THIRD_PARTY_NOTICES.txt'),'utf8'));
-    for(const name of ['markdown-it','highlight.js','fflate','yaml','linkify-it','uc.micro'])assert(notices.includes(name+' '),name+' license notice missing');
+    for(const name of ['markdown-it','highlight.js','fflate','yaml','linkify-it','uc.micro','lucide'])assert(notices.includes(name+' '),name+' license notice missing');
     assert.match(notices,/Permission is hereby granted/);
     assert(!notices.includes('undefined'));
     assert.equal(d.querySelector('#download-app').hidden,true);
@@ -113,4 +113,33 @@ test('folder import embeds images and reimport refreshes the existing document',
     assert.equal(d.querySelectorAll('.file-card').length,1);assert.equal(title(),'Updated');
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
   }finally{w.close();}
+});
+
+test('editing a linked chapter creates an undoable local copy and leaves its original untouched',async()=>{
+ const original='# Linked\n\nOriginal paragraph.',handle={kind:'file',getFile:async()=>({name:'linked.md',size:original.length,text:async()=>original})};
+ const directory={name:'Sources',kind:'directory',entries:async function*(){yield ['linked.md',handle];},getFileHandle:async()=>handle};
+ const {w,d,errors,network}=await app({directory,url:'https://compass.test/compass.html'});
+ const wait=async predicate=>{for(let i=0;i<100&&!predicate();i++)await new Promise(r=>setTimeout(r,10));assert(predicate());};
+ try{
+  d.querySelector('#browse').click();await wait(()=>d.querySelector('#browser-entries input'));
+  const input=d.querySelector('#browser-entries input');input.checked=true;input.dispatchEvent(new w.Event('change'));d.querySelector('#add-selected').click();
+  [...d.querySelectorAll('.file-menu-actions button')].find(button=>button.textContent==='Edit Markdown').click();await wait(()=>!d.querySelector('#source-editor').hidden);
+  const source=d.querySelector('#source-text');assert.equal(source.value,original);source.value='# Linked\n\nEdited in Compass';source.dispatchEvent(new w.Event('input'));
+  const draft=()=>JSON.parse(w.localStorage.getItem('compass-project:Browser files'));assert.equal(draft().files[0].path,undefined);assert.match(draft().files[0].text,/Edited in Compass/);assert.equal(await (await handle.getFile()).text(),original);
+  d.querySelector('#undo-project').click();assert.equal(draft().files[0].path,'linked.md');assert.equal(draft().files[0].text,undefined);assert.equal(source.value,original);
+  assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
+ }finally{w.close();}
+});
+test('publication checks stay visible and export includes custom branding and print settings',async()=>{
+ const {w,d,downloads,errors}=await app({url:'https://compass.test/compass.html'});
+ const wait=async predicate=>{for(let i=0;i<100&&!predicate();i++)await new Promise(r=>setTimeout(r,10));assert(predicate());};
+ try{
+  const value={name:'Check Book',branding:{name:'House Brand',footer:'Team reference'},options:{print_paper:'A4',print_margin:24,body_font:'serif'},files:[{name:'chapter.md',text:'# Chapter\n\n## Intro\n\n[Bad](#absent)\n\n![](missing.png)'}]};
+  Object.defineProperty(d.querySelector('#project-input'),'files',{value:[{text:async()=>JSON.stringify(value)}]});d.querySelector('#project-input').dispatchEvent(new w.Event('change'));await wait(()=>d.querySelector('.file-card'));
+  d.querySelector('#check-publication').click();await wait(()=>d.querySelectorAll('.check-result').length===3);
+  assert.match(d.querySelector('#check-results').textContent,/Section link does not exist/);assert.match(d.querySelector('#check-results').textContent,/alternative text/);
+  d.querySelector('#export').click();await wait(()=>downloads.length===1);
+  const html=await readBlob(w,downloads[0]);assert.match(html,/House Brand/);assert.match(html,/Team reference/);assert.match(html,/size:A4;margin:24mm/);assert.match(html,/Georgia/);
+  assert.equal(d.querySelectorAll('.check-result').length,3);assert.deepEqual(errors,[]);
+ }finally{w.close();}
 });

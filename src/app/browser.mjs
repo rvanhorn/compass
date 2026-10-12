@@ -1,5 +1,8 @@
 import {createRenderer,exportPublication,DEFAULT_OPTIONS,normalizeProject} from '../reader/renderer.mjs';
-import {normalizePath,resolvePath,basename} from '../shared/options.mjs';
+import {normalizePath,resolvePath,basename,DESIGN_KEYS,createDesignPreset,readDesignPreset,normalizeBranding} from '../shared/options.mjs';
+import {createHistory} from './history.mjs';
+import {pairedAccent} from '../shared/design.mjs';
+import {icon} from '../shared/icons.mjs';
 
 const resources=__COMPASS_RESOURCES__;
 const examples=__COMPASS_EXAMPLES__;
@@ -36,7 +39,7 @@ export function createBrowserBackend({window,renderer,examples}) {
     for(const doc of project.files) {
       if(typeof doc.text!=='string') {
         const handle=await fileAt(doc.path);
-        if(!handle)throw Error('Reconnect the source folder using Browse Workspace, or import '+doc.path+'.');
+        if(!handle)throw Error('Reconnect the source folder using Link Folder, or import '+doc.path+'.');
         const file=await handle.getFile();
         if(file.size>MAX_BYTES)throw Error('Missing or oversized source: '+doc.path);
         doc.text=await file.text();
@@ -68,7 +71,7 @@ export function createBrowserBackend({window,renderer,examples}) {
       workspace=await window.showDirectoryPicker({mode:'read'});catalog.clear();return true;
     },
     async list(path='.') {
-      path=normalizePath(path);if(!workspace)throw Error('Select a source folder with Browse Workspace first.');
+      path=normalizePath(path);if(!workspace)throw Error('Select a source folder with Link Folder first.');
       let folder=workspace;for(const part of path.split('/').filter(Boolean))folder=await folder.getDirectoryHandle(part);
       const entries=[];
       for await(const [name,handle] of folder.entries()) {
@@ -102,3 +105,6 @@ export function createBrowserBackend({window,renderer,examples}) {
 window.CompassBrowser=createBrowserBackend({window,renderer,examples});
 // Public, local-only API also makes the packaged renderer testable without HTTP.
 window.CompassRenderer=renderer;
+window.CompassDesign={pairedAccent};
+window.CompassProject={normalizeProject,normalizeBranding,DESIGN_KEYS,createDesignPreset,readDesignPreset,createHistory};
+window.CompassIcons=icon;

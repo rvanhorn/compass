@@ -2,6 +2,7 @@ import {build} from 'esbuild';
 import {readFile,writeFile,mkdir,copyFile,rm} from 'node:fs/promises';
 import path from 'node:path';
 import {root,read,loadResources} from './resources.mjs';
+import {icon} from '../src/shared/icons.mjs';
 const resources=await loadResources();
 const image='data:image/svg+xml;base64,'+(await readFile(path.join(root,'demo/assets/publishing-workflow.svg'))).toString('base64');
 const examples={};
@@ -19,12 +20,16 @@ const bundled=await build({
 });
 const runtime=bundled.outputFiles[0].text.replace(/<\/script/gi,'<\\/script');
 const controls=(await read('src/app/controls.js')).replace(/<\/script/gi,'<\\/script');
-const favicon='data:image/svg+xml;base64,'+Buffer.from(resources['shared/favicon.svg']).toString('base64');
-const builderCSS=await read('src/app/styles.css');
+const menus=(await read('src/app/menus.js')).replace(/<\/script/gi,'<\\/script');
+const theme=(await read('src/app/theme.js')).replace(/<\/script/gi,'<\\/script');
+const favicon='data:image/svg+xml;base64,'+Buffer.from(resources['shared/favicon.svg'].replaceAll('#2563eb','#334155')).toString('base64');
+const builderCSS=(await read('src/app/styles.css'))+'\n'+resources['shared/color-picker.css'];
 let html=(await read('src/app/template.html'))
+  .replace(/<i data-icon="([\w-]+)"><\/i>/g,(_,name)=>icon(name))
   .replaceAll('favicon.svg',favicon)
+  .replace('<script src="theme.js"></script>',()=>'<script>'+theme+'</script>')
   .replace('<link rel="stylesheet" href="app.css">',()=>'<style>'+builderCSS+'</style>')
-  .replace('<script src="app.js"></script>',()=>'<script>'+runtime+'</script><script>'+controls+'</script>');
+  .replace('<script src="app.js"></script>',()=>'<script>'+runtime+'</script><script>'+resources['shared/motion.js']+'</script><script>'+resources['shared/color-picker.js']+'</script><script>'+menus+'</script><script>'+controls+'</script>');
 // Include complete notices inside each downloadable file and next to the site.
 const packages=new Set();
 for(const input of Object.keys(bundled.metafile.inputs)) {
@@ -61,7 +66,7 @@ const metadata=[
   ['name','twitter:image:alt',imageAlt],
 ].map(([attribute,key,value])=>`<meta ${attribute}="${key}" content="${escape(value)}">`).join('\n');
 const social=`\n<link rel="canonical" href="${escape(siteURL)}">\n${metadata}\n`;
-const demo=html.replace('<body>','<body data-demo="true">').replace('<title>Compass Workspace</title>',`<title>${escape(title)}</title>`);
+const demo=html.replace('<body>','<body data-demo="true">').replace('<title>Compass Publisher</title>',`<title>${escape(title)}</title>`);
 await writeFile(path.join(root,'dist/index.html'),demo.replace('<!-- social-metadata -->',social));
 // Remove the former compact demo page when rebuilding an existing dist/.
 await rm(path.join(root,'dist/compact.html'),{force:true});
