@@ -1,0 +1,19 @@
+# Dependencies and generated output.
+node_modules/
+/dist/
+/coverage/
+/.nyc_output/
+/.cache/
+*.log
+
+# Local environment files; keep an example available for documentation.
+.env
+.env.*
+!.env.example
+
+# Local publications and working projects; demo content stays versioned.
+/output/
+/compass.json
+
+# macOS metadata.
+.DS_Store

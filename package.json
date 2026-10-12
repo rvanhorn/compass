@@ -1,0 +1,58 @@
+{
+  "name": "compass",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turn Markdown into polished, customizable HTML publications in your browser.",
+  "homepage": "https://rvanhorn.github.io/compass/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rvanhorn/compass.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rvanhorn/compass/issues"
+  },
+  "keywords": [
+    "markdown",
+    "markdown-to-html",
+    "publishing",
+    "html",
+    "javascript",
+    "browser",
+    "offline",
+    "static-site",
+    "github-pages",
+    "documentation"
+  ],
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "packageManager": "pnpm@12.8.1",
+  "scripts": {
+    "build": "node build-scripts/build.mjs",
+    "dev": "pnpm run build && node build-scripts/serve.mjs",
+    "preview": "node build-scripts/serve.mjs",
+    "previews": "node build-scripts/previews.mjs",
+    "clean": "node build-scripts/clean.mjs",
+    "pretest": "pnpm run build && pnpm run previews",
+    "test": "node --test",
+    "check": "pnpm test"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "jsdom": "30.1.2"
+  },
+  "dependencies": {
+    "fflate": "0.8.3",
+    "highlight.js": "11.12.0",
+    "markdown-it": "15.0.2",
+    "markdown-it-abbr": "2.0.0",
+    "markdown-it-deflist": "4.0.0",
+    "markdown-it-footnote": "4.0.0",
+    "markdown-it-ins": "4.0.0",
+    "markdown-it-mark": "4.0.0",
+    "markdown-it-sub": "2.0.0",
+    "markdown-it-sup": "2.0.0",
+    "markdown-it-task-lists": "2.1.1",
+    "yaml": "2.9.1"
+  }
+}

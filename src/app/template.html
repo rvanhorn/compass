@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Compass Workspace</title><link rel="icon" href="favicon.svg"><link rel="stylesheet" href="app.css"></head>
+<body>
+<header class="workspace-header"><a class="workspace-brand" href="#"><img src="favicon.svg" alt=""><strong>Compass</strong><span>Workspace</span></a><div class="header-actions"><span id="save-state" class="muted" role="status">Converts in Your Browser</span><button id="download-app" hidden>Download App</button><button id="open-project">Open Project</button><button id="save-project">Save Project</button><button id="export" class="primary" disabled>Export HTML <span aria-hidden="true">↗</span></button></div></header>
+<main id="workspace">
+ <section class="welcome"><span class="eyebrow">Your Words. Your Publication.</span><h1>A Place for Everything<br>You Want to Share.</h1><p>Bring your Markdown. Shape the reading experience.<br>Publish one beautiful document—or a connected collection.</p></section>
+ <aside id="drawer" aria-label="Publication Settings">
+  <div class="drawer-heading"><div><span class="eyebrow">Publication Studio</span><h2>Make It Yours</h2></div><button id="hide-drawer" class="icon-button" title="Hide Settings" aria-label="Hide Settings">‹</button></div>
+  <nav class="tabs" aria-label="Builder Sections"><button data-tab="files" aria-selected="true">Files <span id="file-count">0</span></button><button data-tab="appearance" aria-selected="false">Design</button><button data-tab="features" aria-selected="false">Features</button><button data-tab="publishing" aria-selected="false">Publish</button></nav>
+  <div class="drawer-scroll">
+   <section class="tab-panel" id="tab-files">
+    <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Choose Markdown Files"><span class="drop-icon" aria-hidden="true">＋</span><h3>Drop Your Markdown Here</h3><p>One file or a whole collection.<br>Drag to arrange the reading order.</p><span class="drop-link">Choose Files</span></div>
+    <div class="file-actions"><button id="browse">Browse Workspace</button><button id="folder-upload">Import Folder</button></div><p id="source-help" class="help">Folder imports include local images. Workspace files stay linked to their originals.</p>
+    <div class="file-actions browser-examples" hidden><button id="load-example">Try Example</button><button id="load-combined-example">Try Two Chapters</button></div>
+    <div class="section-heading"><h3>Reading Order</h3><button id="clear-files" class="text-button">Clear All</button></div><ol id="file-list" class="file-list"></ol><p id="files-empty" class="empty-note">Your documents will appear here.</p>
+    <div class="field"><label for="mode">Publication Format</label><select id="mode"><option value="combined">Combine Into One Document</option><option value="separate">Separate Pages With Navigation</option></select><p class="help">Combined chapters share one Contents and outline. Separate pages export together in a ZIP.</p></div>
+    <label class="toggle-row"><span><strong>Chapter Titles</strong><small>Use each file’s title to introduce its chapter.</small></span><input type="checkbox" id="chapter-titles" checked></label>
+   </section>
+   <section class="tab-panel" id="tab-appearance" hidden>
+    <div class="section-heading"><h3>Start With a Feeling</h3><span class="muted">Then Fine-Tune</span></div><div class="preset-grid"><button data-preset="standard"><i style="background:#2563eb"></i>Compass</button><button data-preset="editorial"><i style="background:#d97706"></i>Editorial</button><button data-preset="compact"><i style="background:#0d9488"></i>Reference</button><button data-preset="vivid"><i style="background:#ec4899"></i>Vivid</button></div>
+    <div class="section-heading"><h3>Color & Canvas</h3></div><div id="palette" class="palette"></div><div class="color-fields"><div class="color-field"><label for="opt-accent">Accent Color</label><div class="color-value"><span class="color-swatch"><input id="opt-accent" type="color" aria-label="Accent Color"></span><input id="hex-accent" class="color-hex" type="text" maxlength="7" spellcheck="false" aria-label="Accent Color Hex"></div></div><div class="color-field"><label for="opt-background">Page Background</label><div class="color-value"><span class="color-swatch"><input id="opt-background" type="color" aria-label="Page Background"></span><input id="hex-background" class="color-hex" type="text" maxlength="7" spellcheck="false" aria-label="Page Background Hex"></div></div></div>
+    <div id="design-controls"></div><label class="toggle-row"><span><strong>Compact Spacing</strong><small>A tighter rhythm for reference material.</small></span><input type="checkbox" data-option="compact"></label><label class="toggle-row"><span><strong>Reader Preferences</strong><small>Allow exported pages to remember reader adjustments.</small></span><input type="checkbox" data-option="remember"></label>
+   </section>
+   <section class="tab-panel" id="tab-features" hidden><p class="panel-description">Choose what belongs in the reading experience. Turn off anything your publication doesn’t need.</p><div id="feature-controls"></div></section>
+   <section class="tab-panel" id="tab-publishing" hidden>
+    <div class="field"><label for="project-name">Project Name</label><input id="project-name" placeholder="Untitled Publication"><p class="help">Also used for your exported filename.</p></div>
+    <div class="field"><label for="publication-title">Publication Title</label><input id="publication-title" placeholder="Use the Project Name"><p class="help">The cover title for a combined document.</p></div>
+    <div class="field"><label for="subtitle">Subtitle</label><textarea id="subtitle" rows="3" placeholder="Optional introduction"></textarea></div>
+    <div class="field"><label for="author">Author</label><input id="author" placeholder="Optional"></div>
+    <label class="toggle-row"><span><strong>Escape Source HTML</strong><small>Recommended for imported Markdown. Turn off only for trusted embedded HTML.</small></span><input type="checkbox" id="safe" checked></label>
+    <div class="info-card"><strong>Ready to Travel</strong><p>HTML exports include styles, scripts, and local images. Equations and Mermaid diagrams use online libraries when enabled.</p><p>Save a project to reuse these settings, source links, and uploaded files.</p></div>
+    <button id="reset-options" class="wide">Reset Design & Features</button>
+   </section>
+  </div>
+  <footer class="drawer-footer"><span id="document-summary">Add a File to Begin</span><button id="start-preview" class="primary">Preview Publication <span aria-hidden="true">→</span></button></footer>
+ </aside>
+ <section id="preview-pane" aria-label="Live Document Preview" hidden>
+  <div class="preview-toolbar"><div><button id="show-drawer" title="Show Settings">☰ Settings</button><span class="live-indicator"><i></i>Live Preview</span></div><select id="preview-page" aria-label="Preview Page"></select><div class="preview-controls"><div class="viewport-buttons" role="group" aria-label="Preview Width"><button data-viewport="full" aria-pressed="true">Desktop</button><button data-viewport="820" aria-pressed="false">Tablet</button><button data-viewport="390" aria-pressed="false">Phone</button></div><span class="preview-control-divider" aria-hidden="true">|</span><div class="zoom-buttons" role="group" aria-label="Preview Zoom"><button data-zoom="1" aria-pressed="true">100%</button><button data-zoom="0.75" aria-pressed="false">75%</button><button data-zoom="0.5" aria-pressed="false">50%</button></div></div></div>
+  <div id="preview-stage"><div id="preview-canvas"><iframe id="preview-frame" title="Publication Preview" sandbox="allow-scripts allow-modals allow-downloads"></iframe></div><div class="preview-drop-message"><strong>Drop to Add Chapters</strong><span>They’ll appear in your reading order.</span></div></div>
+ </section>
+</main>
+<div id="status" role="status" aria-live="polite" hidden></div>
+<dialog id="file-browser"><div class="dialog-heading"><div><span class="eyebrow">Workspace Files</span><h2>Build Your Reading List</h2></div><button id="close-browser" aria-label="Close File Browser">×</button></div><p id="workspace-root" class="help"></p><div class="browser-path"><button id="folder-up" aria-label="Parent Folder">↑</button><input id="folder-path" aria-label="Folder Path" placeholder="Folder Relative to Workspace"><button id="folder-go">Go</button></div><div id="browser-entries"></div><footer><span id="selection-count">0 Selected</span><button id="add-selected" class="primary">Add Selected Files</button></footer></dialog>
+<input type="file" id="file-input" accept=".md,.markdown,.mdown" multiple hidden><input type="file" id="folder-input" webkitdirectory multiple hidden><input type="file" id="project-input" accept=".json" hidden>
+<script src="app.js"></script></body></html>

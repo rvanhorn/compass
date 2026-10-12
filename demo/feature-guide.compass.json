@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "name": "Explore Compass",
+  "title": "Explore Compass",
+  "subtitle": "A hands-on guide to documents, navigation, and rich Markdown",
+  "author": "Compass",
+  "mode": "combined",
+  "safe": true,
+  "chapter_titles": false,
+  "options": {
+    "accent": "#2563eb",
+    "contents": true,
+    "contents_open": false,
+    "outline": true,
+    "outline_depth": 2,
+    "remember": false
+  },
+  "files": [
+    {
+      "path": "demo/feature-guide.md",
+      "name": "feature-guide.md",
+      "title": "Explore Compass"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 220" role="img" aria-labelledby="title desc">
+  <title id="title">From Markdown to publication</title>
+  <desc id="desc">Three connected steps: source, preview, and export.</desc>
+  <rect width="840" height="220" rx="24" fill="#f1f5f9"/>
+  <path d="M220 110h80m240 0h80" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+  <path d="m290 102 10 8-10 8m320-16 10 8-10 8" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#fff" stroke="#cbd5e1" stroke-width="2">
+    <rect x="40" y="50" width="180" height="120" rx="16"/>
+    <rect x="330" y="50" width="180" height="120" rx="16"/>
+    <rect x="620" y="50" width="180" height="120" rx="16"/>
+  </g>
+  <g font-family="system-ui, sans-serif" text-anchor="middle">
+    <g font-size="22" font-weight="650" fill="#0f172a">
+      <text x="130" y="105">Source</text><text x="420" y="105">Preview</text><text x="710" y="105">Export</text>
+    </g>
+    <g font-size="15" fill="#475569">
+      <text x="130" y="134">Markdown files</text><text x="420" y="134">Make it yours</text><text x="710" y="134">Shareable HTML</text>
+    </g>
+  </g>
+</svg>
