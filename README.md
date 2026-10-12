@@ -34,6 +34,10 @@ Use `http://127.0.0.1:4173/compass.html` for the empty workspace. Stop the stati
 
 The hosted demo will be available at **[rvanhorn.github.io/compass](https://rvanhorn.github.io/compass/)** after the first push to `main` and successful deployment. Its **Download App** button downloads the standalone app for offline use.
 
+The demo includes Open Graph and Twitter sharing metadata, with a 1200 × 630 card at `og-card.png`. The build copies the committed PNG from `src/app/assets/`; its editable source is `src/app/assets/og-card.svg`. When changing the artwork, render the SVG to a 1200 × 630 PNG and commit both files. Sharing URLs use the `homepage` in `package.json`; update it when hosting elsewhere.
+
+The demo advertises only the wide card in both Open Graph and Twitter metadata. Listing multiple Open Graph images can make Discord display a gallery with cropped images. The 630 × 630 compact asset (`og-card-compact.png`) remains available, with editable source at `src/app/assets/og-card-compact.svg`, but is not included in the page's sharing metadata.
+
 GitHub Pages uses **GitHub Actions** as its publishing source. The **Checks and Pages** workflow installs locked dependencies, builds the app and reading examples, runs all checks, and publishes only `dist/` after a successful push to `main`. Pull requests and other branches run checks without deploying. You can also deploy `main` manually from the workflow's **Run workflow** button. Local build and check commands do not publish anything.
 
 Run `pnpm run previews` to generate reading examples in `dist/previews/`. Open `dist/previews/feature-guide.html` directly, or visit `http://127.0.0.1:4173/previews/feature-guide.html` while the preview server is running.

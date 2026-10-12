@@ -2,6 +2,13 @@
 
 All notable changes to Compass are recorded here, grouped by version and change type.
 
+## 1.0.1
+
+### Added
+
+- A branded 1200 × 630 Open Graph card with static Open Graph and Twitter sharing metadata for the hosted demo.
+- A square sharing card advertised as an Open Graph alternate on the main demo URL, preserving the wide card as the preferred image; clients control image selection.
+
 ## 1.0.0
 
 ### Added

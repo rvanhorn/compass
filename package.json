@@ -1,6 +1,6 @@
 {
   "name": "compass",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Turn Markdown into polished, customizable HTML publications in your browser.",
   "homepage": "https://rvanhorn.github.io/compass/",
