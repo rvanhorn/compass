@@ -26,7 +26,10 @@ function page(initialScroll=0,sectionCount=0,options={}){
   }
   w.scrollY=initialScroll;
   w.requestAnimationFrame=callback=>frames.push(callback);
-  w.matchMedia=()=>({matches:true});
+  const themeListeners=[];
+  const themeMedia={matches:options.dark===true,addEventListener:(event,listener)=>{if(event==='change')themeListeners.push(listener);}};
+  w.matchMedia=()=>themeMedia;
+  if(options.theme)d.documentElement.dataset.theme=options.theme;
   w.HTMLElement.prototype.scrollIntoView=function(){};
   Object.defineProperty(w,'innerHeight',{value:724,writable:true});
   Object.defineProperty(d.documentElement,'scrollHeight',{value:sectionCount?sectionCount*500+1000:5000,configurable:true});
@@ -43,8 +46,40 @@ function page(initialScroll=0,sectionCount=0,options={}){
   function flush(){while(frames.length)frames.shift()();}
   function scroll(y){w.scrollY=y;w.dispatchEvent(new w.Event('scroll'));flush();}
   flush();
-  return {dom,w,d,headings,scroll,flush};
+  const setSystemTheme=dark=>{themeMedia.matches=dark;themeListeners.forEach(listener=>listener({matches:dark}));};
+  return {dom,w,d,headings,scroll,flush,setSystemTheme};
 }
+test('exports follow system appearance and keep independent reader accents for both themes',()=>{
+  const {w,d,setSystemTheme}=page(0,0,{dark:true});
+  try{
+    const accent=d.querySelector('#ctrl-accent');
+    assert.equal(d.documentElement.dataset.theme,'dark');
+    const originalDark=accent.value;
+    accent.value='#ef4444';accent.dispatchEvent(new w.Event('input',{bubbles:true}));
+    setSystemTheme(false);
+    assert.equal(d.documentElement.dataset.theme,'light');
+    assert.equal(accent.value,'#2563eb');
+    accent.value='#16a34a';accent.dispatchEvent(new w.Event('input',{bubbles:true}));
+    setSystemTheme(true);
+    assert.equal(accent.value,'#ef4444');
+    assert.notEqual(originalDark,accent.value);
+    setSystemTheme(false);assert.equal(accent.value,'#16a34a');
+  }finally{w.close();}
+});
+test('preview appearance follows its parent theme instead of device changes',async()=>{
+  const {w,d,setSystemTheme}=page(0,0,{dark:true,theme:'light'});
+  try{
+    const accent=d.querySelector('#ctrl-accent');
+    assert.equal(accent.value,'#2563eb');
+    d.documentElement.dataset.theme='dark';
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(accent.value,w.__compassDefaults.dark_accent);
+    setSystemTheme(false);assert.equal(d.documentElement.dataset.theme,'dark');
+    d.documentElement.dataset.theme='light';
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(accent.value,'#2563eb');
+  }finally{w.close();}
+});
 test('disabled reader features stay disabled and project preview ignores saved preferences',()=>{
  const {w,d}=page(0,0,{features:{remember:false,search:false,customize:false,table_sort:false,table_resize:false}});
  try{
@@ -174,7 +209,7 @@ test('old serif preferences are dropped while other saved settings survive',()=>
 test('bright accent presets retain readable text and have no footer divider',()=>{
   const {dom,w,d}=page();
   try{
-    const swatches=[...d.querySelectorAll('.swatches button')];
+    const swatches=[...d.querySelectorAll('.swatches button[data-color]')];
     assert.equal(swatches.length,6);
     for(const button of swatches){
       button.click();
@@ -201,7 +236,7 @@ test('deeper sections highlight the visible parent and remain in Find',()=>{
     scroll(1200);
     assert.equal(d.querySelector('.right-rail a.active').dataset.target,'section-1');
     d.querySelector('#search-toggle').click();
-    assert.equal(d.querySelectorAll('#search-results button').length,4);
+    assert.equal(d.querySelectorAll('#search-results button').length,5); // The publication title and all four section levels.
   }finally{w.close();}
 });
 test('long table fade clears at the bottom and returns when there are more rows',()=>{
@@ -228,10 +263,36 @@ test('preferences show defaults, preserve current values, and clearly identify c
     assert.equal(d.querySelector('#accent-name').textContent,'Custom');
     assert.equal(d.querySelector('#accent-value').textContent,'#FFDD00');
     assert(d.querySelector('.custom-color').classList.contains('selected'));
-    assert.equal(d.querySelectorAll('.swatches button.selected').length,0);
+    assert.equal(d.querySelectorAll('.swatches button[data-color].selected').length,0);
     d.querySelector('#reset-settings').click();
     assert.equal(d.querySelector('#ctrl-font-value').value,'17');
-    assert.equal(d.querySelector('#accent-name').textContent,'Blue');
+    assert.equal(d.querySelector('#accent-name').textContent,'Default');
     assert.equal(d.querySelector('#print-button'),null);
   }finally{w.close();}
+});
+test('reader color picker edits without closing Customize and dismisses on outside clicks and Escape',()=>{
+ const {w,d}=page();
+ try{
+  const panel=d.querySelector('#settings-panel'),trigger=d.querySelector('#ctrl-accent'),picker=d.querySelector('.compass-color-picker');
+  d.querySelector('#settings-toggle').click();trigger.click();
+  assert(panel.classList.contains('visible'));assert.equal(picker.hidden,false);
+  const hex=picker.querySelector('.ccp-hex input');hex.value='#cc2244';hex.dispatchEvent(new w.Event('input',{bubbles:true}));hex.click();
+  assert(panel.classList.contains('visible'));assert.equal(picker.hidden,false);assert.equal(trigger.value,'#cc2244');
+  hex.value='#cc2245';hex.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(d.querySelector('#accent-name').textContent,'Custom');
+  hex.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+  assert.equal(picker.hidden,true);assert(panel.classList.contains('visible'));assert.equal(d.activeElement,trigger);
+  trigger.click();d.querySelector('.color-heading').click();assert.equal(picker.hidden,true);assert(panel.classList.contains('visible'));
+  trigger.click();d.querySelector('#document').click();assert.equal(picker.hidden,true);assert(!panel.classList.contains('visible'));
+ }finally{w.close();}
+});
+test('Focus fades navigation before expanding content, and restores it when turned off',()=>{
+ const {w,d}=page(),animations=[];
+ try{
+  w.HTMLElement.prototype.animate=function(){const animation={cancel(){},finish(){this.onfinish?.();}};animations.push(animation);return animation;};
+  for(const element of d.querySelectorAll('.section-map,.right-rail'))element.getBoundingClientRect=()=>({height:200,width:200});
+  d.querySelector('.main-column').getBoundingClientRect=()=>({left:0,top:0,height:600,width:d.body.classList.contains('focus-mode')?900:600});
+  const button=d.querySelector('#focus-toggle');button.click();assert.equal(button.getAttribute('aria-pressed'),'true');assert(!d.body.classList.contains('focus-mode'));
+  animations.slice().forEach(animation=>animation.finish());assert(d.body.classList.contains('focus-mode'));assert(d.querySelector('.section-map').hidden);
+  button.click();assert(!d.body.classList.contains('focus-mode'));assert.equal(d.querySelector('.section-map').hidden,false);assert.equal(button.getAttribute('aria-pressed'),'false');
+ }finally{w.close();}
 });

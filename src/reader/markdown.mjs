@@ -9,6 +9,7 @@ import sub from 'markdown-it-sub';
 import tasks from 'markdown-it-task-lists';
 import YAML from 'yaml';
 import hljs from 'highlight.js';
+import {icon} from '../shared/icons.mjs';
 
 export const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#x27;'}[char]));
 export function parseFrontmatter(source) {
@@ -59,10 +60,10 @@ export function createMarkdown(safe=true) {
   for(const plugin of [footnote,deflist,abbr,mark,ins,sup,sub,tasks,math,compassInsertion])md.use(plugin);
   md.renderer.rules.fence=(tokens,index)=>{
     const token=tokens[index],language=(token.info.trim().split(/\s+/)[0]||'text').toLowerCase(),code=token.content;
-    if(['mermaid','mmd'].includes(language))return '<div class="mermaid-frame"><div class="mermaid-header">✧ Flow Diagram · Mermaid</div><pre class="mermaid">'+escapeHTML(code)+'</pre></div>\n';
+    if(['mermaid','mmd'].includes(language))return '<div class="mermaid-frame"><div class="mermaid-header">'+icon('network')+'<span>Flow Diagram · Mermaid</span></div><pre class="mermaid">'+escapeHTML(code)+'</pre></div>\n';
     let highlighted=escapeHTML(code);
     try{if(hljs.getLanguage(language))highlighted=hljs.highlight(code,{language,ignoreIllegals:true}).value;}catch(_){}
-    return '<div class="code-frame"><div class="code-bar"><span class="code-language"><span class="code-dots"><i></i><i></i><i></i></span>'+escapeHTML(language.toUpperCase())+'</span><button class="copy-btn" type="button" aria-label="Copy code">Copy code</button></div><pre><code>'+highlighted+'</code></pre></div>\n';
+    return '<div class="code-frame"><div class="code-bar"><span class="code-language"><span class="code-dots"><i></i><i></i><i></i></span>'+escapeHTML(language.toUpperCase())+'</span><button class="copy-btn" type="button" aria-label="Copy code">'+icon('copy')+'<span>Copy</span></button></div><pre><code>'+highlighted+'</code></pre></div>\n';
   };
   return md;
 }

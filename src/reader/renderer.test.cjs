@@ -18,8 +18,8 @@ const project=()=>({name:'Field Guide',files:[
   {name:'book/a.md',text:'# Alpha\n\n## Shared\n\n[Next](b.md#shared)\n\nA note[^1].\n\n[^1]: First note.'},
   {name:'book/b.md',text:'# Beta\n\n## Shared\n\n[Back](a.md#shared)\n\nA note[^1].\n\n[^1]: Second note.'},
 ]});
-test('all 33 options survive project round trips and invalid values use defaults',()=>{
-  assert.equal(Object.keys(api.DEFAULT_OPTIONS).length,33);
+test('all 50 options survive project round trips and invalid values use defaults',()=>{
+  assert.equal(Object.keys(api.DEFAULT_OPTIONS).length,50);
   const options={...api.DEFAULT_OPTIONS};
   for(const key of Object.keys(options))if(typeof options[key]==='boolean')options[key]=!options[key];
   Object.assign(options,{accent:'#EC4899',background:'#123456',font:21,width:1200,radius:0,leading:2,table_rows:3,outline_depth:4,reading_speed:400});
@@ -35,13 +35,29 @@ test('all 33 options survive project round trips and invalid values use defaults
   assert.throws(()=>api.normalizeProject({files:[{path:'/secret.md'}]}));
   assert.throws(()=>renderer.renderProject({files:[]}));
 });
+test('both theme palettes and SVG colors survive projects and standalone exports',()=>{
+ const options={accent:'#ee3344',dark_accent:'#ff7788',background:'#fff8f8',dark_background:'#231114',logo_color:'#000000',dark_logo_color:'#112233'};
+ const publication=renderer.renderProject({...project(),options}),page=parse(publication.pages[0].html);
+ for(const [property,value] of Object.entries({'--accent':options.accent,'--dark-accent':options.dark_accent,'--light-bg':options.background,'--dark-bg':options.dark_background,'--light-logo-ink':options.logo_color,'--dark-logo-ink':options.dark_logo_color}))assert.equal(page.documentElement.style.getPropertyValue(property),value);
+ const favicon=Buffer.from(page.querySelector('link[rel=icon]').href.split(',')[1],'base64').toString();assert(favicon.includes('fill="#000000"'));assert(favicon.includes('stroke="#000000"'));
+ assert(page.querySelector('#search-toggle svg.lucide-search'));assert(page.querySelector('.heading-anchor svg.lucide-link'));
+ assert.deepEqual(api.normalizeProject(JSON.parse(JSON.stringify(publication.project))).options,api.normalizeOptions(options));
+ const legacy=api.normalizeOptions({accent:'#bb2222'});assert.notEqual(legacy.dark_accent,api.DEFAULT_OPTIONS.dark_accent);
+});
+test('surface overrides and typography adjustments reach exports and preserve fractional values',()=>{
+ const options={surface:'#fff4ee',dark_surface:'#282422',letter_spacing:.015,paragraph_spacing:24,heading_scale:1.15};
+ const page=render('# Title\n\n## Heading\n\nParagraph.',{options});
+ for(const [property,value] of Object.entries({'--light-surface':'#fff4ee','--dark-surface':'#282422','--letter-spacing':'.015em','--paragraph-gap':'24px','--heading-scale':'1.15'}))assert.equal(page.documentElement.style.getPropertyValue(property).replace(/^0\./,'.'),value);
+ assert.deepEqual(api.normalizeOptions({...options}).letter_spacing,.015);
+ const automatic=render('# Title');assert.equal(automatic.documentElement.style.getPropertyValue('--light-surface'),'');assert.equal(automatic.documentElement.style.getPropertyValue('--dark-surface'),'');
+});
 test('frontmatter supplies title, attribution, dates and descriptions without duplicate H1',()=>{
   const page=render('\uFEFF---\r\ntitle: Source\r\nauthor: Writer\r\ndate: 2026-10-11\r\ndescription: Intro\r\n---\r\n# Source\r\n\r\n## Section');
   assert.equal(page.querySelector('h1').textContent,'Source');assert.equal(page.querySelectorAll('h1').length,1);
   assert.equal(page.querySelector('.hero>p').textContent,'Intro');
   assert.match(page.querySelector('.meta').textContent,/Writer.*October 11, 2026/);
   assert.equal(api.parseFrontmatter('---\ntitle: [broken\n---\n# Body').metadata.title,undefined);
-  assert.equal(render('# Unrelated',{metadata:{title:'Override'}}).querySelector('#document h1').textContent,'Unrelated#');
+  assert.equal(render('# Unrelated',{metadata:{title:'Override'}}).querySelector('#document h1').textContent,'Unrelated');
 });
 test('extended Markdown preserves the established syntax and nested formatting',()=>{
   const page=render('~~removed~~ ==marked== ^^inserted **strong**^^ x^2^ H~2~O\n\n- [x] Done\n- [ ] Later\n\nTerm\n: Definition\n\nHTML\n\n*[HTML]: HyperText\n\nNote[^1].\n\n[^1]: Footnote\n\nhttps://example.com');
@@ -74,7 +90,7 @@ test('Contents, outline depth, Find data and display switches retain all heading
   assert(page.querySelector('.contents-disclosure').open);
   assert.equal(page.querySelectorAll('.right-rail a[data-target]').length,5);
   assert(page.querySelector('h6 .heading-anchor'));
-  assert.match(page.querySelector('script').nextElementSibling.textContent,/deepest/);
+  assert.match(page.querySelector('#publication-data').textContent,/deepest/);
   const switches=['customize','outline','contents','search','focus','reading_time','progress','filename','footer','logo','metadata','subtitle','copy_code','section_links'];
   const disabled=render(markdown+'\n\n```js\nconst x=1;\n```',{metadata:{subtitle:'Subtitle',author:'Author'},options:Object.fromEntries(switches.map(key=>[key,false]))});
   for(const selector of ['#settings-toggle','#settings-panel','.right-rail','.section-map','#search-toggle','#focus-toggle','.reading-time','.reading-progress','.brand-doc','.doc-footer','.brand-logo','.meta','.hero>p','.copy-btn','.heading-anchor'])assert(disabled.querySelector(selector)?.hidden,selector);
@@ -122,11 +138,11 @@ test('combined chapters namespace IDs, footnotes, cross links and preserve order
   const result=renderer.renderProject(project()),page=parse(result.pages[0].html);
   assert.deepEqual(result.warnings,[]);
   const ids=[...page.querySelectorAll('[id]')].map(el=>el.id);assert.equal(ids.length,new Set(ids).size);
-  assert.deepEqual([...page.querySelectorAll('.publication-chapter>h1')].map(h=>h.textContent),['Alpha#','Beta#']);
+  assert.deepEqual([...page.querySelectorAll('.publication-chapter>h1')].map(h=>h.textContent),['Alpha','Beta']);
   assert.equal([...page.querySelectorAll('a')].find(a=>a.textContent==='Next').getAttribute('href'),'#chapter-2-shared');
   for(const a of page.querySelectorAll('#document a[href^="#"]'))assert(page.getElementById(a.getAttribute('href').slice(1)),a.outerHTML);
   const reversed=project();reversed.files.reverse();
-  assert.equal(parse(renderer.renderProject(reversed).pages[0].html).querySelector('.publication-chapter>h1').textContent,'Beta#');
+  assert.equal(parse(renderer.renderProject(reversed).pages[0].html).querySelector('.publication-chapter>h1').textContent,'Beta');
 });
 test('separate pages export a portable ZIP with publication navigation',()=>{
   const result=renderer.renderProject({...project(),mode:'separate'});
@@ -158,4 +174,40 @@ test('bundled examples have working chapter links, assets and no warnings in bot
       const [target,fragment]=href.split('#');assert(pages.get(target||name)?.getElementById(fragment),href);
     }
   }
+});
+
+test('offline full-text indexes span exported pages and every result has a real destination',()=>{
+ const result=renderer.renderProject({name:'Search Book',mode:'separate',files:[{name:'a.md',text:'# Alpha\n\n## Intro\n\nWords in paragraphs: éléphant.\n\n```js\nconst needle = "<unsafe>";\n```'},{name:'b.md',text:'# Beta\n\n## Reference\n\nA uniquely searchable body sentence.'}]});
+ const pages=result.pages.map(page=>parse(page.html)),config=new JSDOM('').window;
+ try{
+  config.eval=code=>require('node:vm').runInNewContext(code,{window:config});config.eval(pages[0].querySelector('#publication-data').textContent);
+  const entries=config.__compassSearch;assert(entries.some(e=>e.text.includes('éléphant')));assert(entries.some(e=>e.text.includes('const needle')));assert(entries.some(e=>e.page===result.pages[1].name&&e.text.includes('uniquely searchable')));
+  for(const entry of entries){const i=result.pages.findIndex(page=>page.name===entry.page);assert(pages[i].getElementById(entry.id));}
+  assert.equal(pages[0].querySelector('#publication-data').textContent.includes('<unsafe>'),false);
+  assert.equal(pages[0].querySelectorAll('script[src]').length,0);
+ }finally{config.close();}
+});
+test('publication checks identify source locations without flagging valid footnotes or removed titles',()=>{
+ const result=renderer.renderProject({files:[{name:'a.md',text:'# Alpha\n\n## Good\n\n#### Gap\n\n[Broken](b.md#absent) [Title](b.md#beta) [Valid](#good) [Missing](missing.md)\n\n![](missing.png)\n\n![Remote](https://example.com/image.png)'},{name:'b.md',text:'# Beta\n\n## Target\n\nNote[^1].\n\n[^1]: Text'}]});
+ const kinds=new Set(result.issues.map(issue=>issue.kind));for(const kind of ['anchor','document','image','alt','heading','online'])assert(kinds.has(kind),kind);
+ assert.equal(result.issues.filter(issue=>issue.kind==='anchor').length,1);
+ assert(result.issues.every(issue=>issue.source==='a.md'));
+ const page=parse(result.pages[0].html);for(const issue of result.issues)assert(page.getElementById(issue.target),issue.target);
+});
+test('branding, local font families and print defaults survive portable project round trips',()=>{
+ const logo='data:image/svg+xml;base64,'+Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>').toString('base64');
+ const value={...project(),branding:{name:'Field & Co',footer:'Private reference <draft>',logo,favicon:logo},options:{body_font:'serif',heading_font:'mono',print_paper:'Letter',print_margin:22,print_chapters:true}};
+ const result=renderer.renderProject(value),page=parse(result.pages[0].html);
+ assert.equal(page.querySelector('.brand-name').textContent,'Field & Co');assert.equal(page.querySelector('.brand-logo img').src,logo);assert.equal(page.querySelector('link[rel=icon]').href,logo);assert.equal(page.querySelector('.doc-footer>span').textContent,'Private reference <draft>');
+ assert.match(page.documentElement.style.getPropertyValue('--body-font'),/Georgia/);assert.match(page.documentElement.style.getPropertyValue('--heading-font'),/monospace/);
+ assert.match(page.querySelector('#publication-print').textContent,/size:Letter; margin:22mm|size:Letter;margin:22mm/);assert.match(page.querySelector('#publication-print').textContent,/break-before:page/);
+ assert.deepEqual(api.normalizeProject(JSON.parse(JSON.stringify(result.project))),result.project);
+ assert.equal(api.normalizeOptions({body_font:'url(https://evil.test)',print_paper:'bad',print_margin:-1}).body_font,'system');
+ assert.equal(api.normalizeProject({...project(),branding:{logo:'javascript:alert(1)'}}).branding.logo,'');
+});
+test('design presets include appearance only and reject unrelated projects',async()=>{
+ const {createDesignPreset,readDesignPreset,DESIGN_KEYS}=await import('../shared/options.mjs');
+ const preset=createDesignPreset({...api.DEFAULT_OPTIONS,font:21,body_font:'serif',search:false,print_margin:30},'House Style');
+ assert.deepEqual(Object.keys(preset.options),DESIGN_KEYS);assert.equal(preset.options.search,undefined);assert.equal(preset.options.print_margin,undefined);assert.equal(preset.files,undefined);assert.equal(preset.options.body_font,'serif');
+ assert.deepEqual(readDesignPreset(JSON.parse(JSON.stringify(preset))),preset);assert.throws(()=>readDesignPreset(project()));assert.throws(()=>readDesignPreset({...preset,version:2}));
 });

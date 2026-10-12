@@ -1,13 +1,15 @@
-import {DEFAULT_OPTIONS,normalizeOptions,normalizeProject,basename,stem,slug,normalizePath,resolvePath} from '../shared/options.mjs';
+import {DEFAULT_OPTIONS,normalizeOptions,normalizeProject,normalizeBranding,FONT_STACKS,basename,stem,slug,normalizePath,resolvePath} from '../shared/options.mjs';
+import {publicationChecks,indexPage,publicationKey} from './publication.mjs';
 import {createMarkdown,parseFrontmatter,escapeHTML as esc} from './markdown.mjs';
 import {zipSync,strToU8} from 'fflate';
+import {icon,ICON_HTML} from '../shared/icons.mjs';
 export {DEFAULT_OPTIONS,normalizeOptions,normalizeProject,parseFrontmatter};
 
 const HEADING='h1,h2,h3,h4,h5,h6';
 const SMALL=new Set('a an and as at but by for from in into nor of on or per than the to via with'.split(' '));
 const WORD=/\p{L}[\p{L}\p{N}_]*(?:[’'.-][\p{L}\p{N}_]+)*/gu;
 const PALETTE=[['#2563eb','Blue'],['#14b8a6','Teal'],['#f97316','Orange'],['#8b5cf6','Violet'],['#f59e0b','Amber'],['#ec4899','Pink']];
-const CLOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const CLOCK=icon('clock');
 const HIDDEN={customize:'#settings-toggle,#settings-panel',outline:'.right-rail,#mobile-menu,#mobile-toc',contents:'.section-map',search:'#search-toggle,#search-modal,.rail-hint',focus:'#focus-toggle',reading_time:'.reading-time',progress:'.reading-progress',filename:'.brand-doc',footer:'.doc-footer',logo:'.brand-logo',metadata:'.meta',subtitle:'.hero>p',copy_code:'.copy-btn',section_links:'.heading-anchor'};
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
 const plain=node=>node.textContent.trim().replace(/\s+/g,' ');
@@ -59,7 +61,7 @@ function alerts(body) {
     const label=match[1].toUpperCase();first.data=first.data.slice(match[0].length);
     if(!plain(p)&&!p.querySelector('*'))p.remove();
     const alert=body.ownerDocument.createElement('aside');alert.className='callout callout-'+label.toLowerCase();alert.setAttribute('role','note');
-    alert.innerHTML='<div class="callout-head"><span class="icon" aria-hidden="true">'+({NOTE:'i',TIP:'✓',IMPORTANT:'✦',WARNING:'!',CAUTION:'×'}[label])+'</span><span>'+titleCase(label.toLowerCase())+'</span></div>';
+    alert.innerHTML='<div class="callout-head"><span class="icon" aria-hidden="true">'+icon({NOTE:'info',TIP:'lightbulb',IMPORTANT:'info',WARNING:'warning',CAUTION:'caution'}[label])+'</span><span>'+titleCase(label.toLowerCase())+'</span></div>';
     alert.append(...quote.childNodes);quote.replaceWith(alert);
   }
 }
@@ -132,8 +134,8 @@ function tocMarkup(toc,depth) {
 function contentsMarkup(toc) {
   const base=Math.min(...toc.map(t=>t.level)),chapters=toc.filter(t=>t.level===base);
   if(chapters.length<2)return '';
-  const cards=chapters.map((t,index)=>`<a href="#${esc(t.id)}"><b aria-hidden="true">${String(index+1).padStart(2,'0')}</b><span class="chapter-name">${esc(t.title.replace(/^\s*\d{1,3}\s*[.·–—:\-]\s*/,''))}</span><span class="chapter-arrow" aria-hidden="true">↗</span></a>`).join('');
-  return `<section class="section-map" aria-label="Chapter directory"><details class="contents-disclosure"><summary class="section-map-head"><strong>Contents</strong><span>${chapters.length} sections</span><span class="contents-action"><span class="contents-show">Show Sections</span><span class="contents-hide">Hide Sections</span></span></summary><nav class="section-map-grid" aria-label="Chapter shortcuts">${cards}</nav></details></section>`;
+  const cards=chapters.map((t,index)=>`<a href="#${esc(t.id)}"><b aria-hidden="true">${String(index+1).padStart(2,'0')}</b><span class="chapter-name">${esc(t.title.replace(/^\s*\d{1,3}\s*[.·–—:\-]\s*/,''))}</span><span class="chapter-arrow" aria-hidden="true">${icon('arrow-up-right')}</span></a>`).join('');
+  return `<section class="section-map" aria-label="Chapter directory"><details class="contents-disclosure"><summary class="section-map-head"><strong>Contents</strong><span>${chapters.length} sections</span><span class="contents-action"><span class="contents-show">Show Sections</span><span class="contents-hide">Hide Sections</span></span><span class="contents-chevron" aria-hidden="true">${icon('chevron-right')}</span></summary><nav class="section-map-grid" aria-label="Chapter shortcuts">${cards}</nav></details></section>`;
 }
 
 /** DOM-based renderer; accepts an inert DOMParser in browsers and in Node tests. */
@@ -145,8 +147,9 @@ export function createRenderer(resources,window) {
     assignHeadingIDs(body);enhance(body,normalizeOptions(options),assets);
     return {metadata,markdown,body};
   }
-  function renderDocument({source='document.md',markdown='',metadata={},body=null,options={},safe=true,assets={},keepTitle=false}={}) {
+  function renderDocument({source='document.md',markdown='',metadata={},body=null,options={},safe=true,assets={},keepTitle=false,branding={}}={}) {
     options=normalizeOptions(options);
+    branding=normalizeBranding(branding);
     if(!body) {
       const prepared=prepare(markdown,{safe,options,assets});
       body=prepared.body;metadata={...prepared.metadata,...metadata};markdown=prepared.markdown;
@@ -163,18 +166,19 @@ export function createRenderer(resources,window) {
     }
     const toc=tocOf(body),headings=tocMarkup(toc,options.outline_depth);
     for(const heading of body.querySelectorAll(HEADING))if(heading.id) {
-      const link=body.ownerDocument.createElement('a');link.className='heading-anchor';link.setAttribute('href','#'+heading.id);link.setAttribute('aria-label','Copy link to section');link.textContent='#';heading.append(link);
+      const link=body.ownerDocument.createElement('a');link.className='heading-anchor';link.setAttribute('href','#'+heading.id);link.setAttribute('aria-label','Copy link to section');link.innerHTML=icon('link');heading.append(link);
     }
     const subtitle=textValue(metadata.subtitle||metadata.description).trim(),author=textValue(metadata.author).trim(),date=textValue(metadata.date).trim();
     const words=(markdown.match(/[\p{L}\p{N}_]+/gu)||[]).length,minutes=Math.max(1,Math.round(words/options.reading_speed));
     const logo=resources['shared/favicon.svg'].replaceAll('#2563eb',options.accent);
-    const favicon='data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(logo)));
+    const favicon=branding.favicon||'data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(logo.replaceAll('#fff',options.logo_color))));
     const rail=toc.length?'<aside class="right-rail" aria-label="Document outline"><div class="rail-title">On This Page</div><nav class="toc-list">'+headings+'</nav><div class="rail-hint"><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>K</kbd> to find a heading</div></aside>':'';
-    const defaults=Object.fromEntries(['font','width','radius','leading','accent'].map(key=>[key,options[key]]));
+    const defaults=Object.fromEntries(['font','width','radius','leading','accent','dark_accent'].map(key=>[key,options[key]]));
     const media=options.media?((body.querySelector('.math-inline,.math-block')?resources['reader/assets/mathjax-loader.html']:'')+(body.querySelector('.mermaid')?resources['reader/assets/mermaid-loader.html']:'')):'';
     const substitutions={
+      ...Object.fromEntries(Object.entries(ICON_HTML).map(([name,svg])=>['icon_'+name.replaceAll('-','_'),svg])),
       description:esc(subtitle||title),favicon_uri:favicon,logo_svg:logo,title:esc(title),source_name:esc(basename(source)),
-      css:resources['reader/styles.css'],syntax_css:resources.syntax_css||'',ui_js:resources['reader/controls.js'],
+      css:resources['reader/styles.css']+'\n'+resources['shared/color-picker.css'],syntax_css:resources.syntax_css||'',picker_js:resources['shared/motion.js']+'\n'+resources['shared/color-picker.js'],ui_js:resources['reader/controls.js']+'\n'+(resources['reader/library.js']||''),
       headings_html:headings,swatch_html:PALETTE.map(([c,name])=>`<button type="button" data-color="${c}" title="${name}" aria-label="Set ${name} accent" aria-pressed="false"><span class="swatch-dot" style="background:${c}"></span><span>${name}</span></button>`).join(''),
       shell_class:'page-shell'+(toc.length?'':' no-outline'),subtitle_html:subtitle?'<p>'+esc(subtitle)+'</p>':'',
       meta_html:author||date?'<div class="meta">'+[author,date].filter(Boolean).map(v=>'<span class="meta-item">'+esc(v)+'</span>').join('')+'</div>':'',
@@ -183,14 +187,28 @@ export function createRenderer(resources,window) {
     };
     const output=resources['reader/template.html'].replace(/\$\$|\$\{(\w+)\}/g,(match,key)=>match==='$$'?'$':substitutions[key]??'');
     const page=parse(output);
-    page.documentElement.setAttribute('style',`--accent:${options.accent};--text-size:${options.font}px;--reader-max:${options.width}px;--radius:${options.radius}px;--body-leading:${options.leading};--bg:${options.background}`);
+    page.documentElement.setAttribute('style',`--accent:${options.accent};--text-size:${options.font}px;--reader-max:${options.width}px;--radius:${options.radius}px;--body-leading:${options.leading};--bg:${options.background};--letter-spacing:${options.letter_spacing}em;--paragraph-gap:${options.paragraph_spacing}px;--heading-scale:${options.heading_scale};--light-bg:${options.background};--dark-bg:${options.dark_background};--dark-accent:${options.dark_accent};--light-logo-ink:${options.logo_color};--dark-logo-ink:${options.dark_logo_color}`);
+    for(const [key,property] of [['surface','--light-surface'],['dark_surface','--dark-surface']])if(options[key])page.documentElement.style.setProperty(property,options[key]);
     page.querySelector('meta[name="theme-color"]').content=options.accent;
+    page.querySelector('link[rel="icon"]').type=favicon.slice(5,favicon.indexOf(';'));
+    page.documentElement.style.setProperty('--body-font',FONT_STACKS[options.body_font]);
+    page.documentElement.style.setProperty('--heading-font',FONT_STACKS[options.heading_font]);
+    page.querySelector('.brand-name').textContent=branding.name||'Compass';
+    page.querySelector('.brand').setAttribute('aria-label',(branding.name||'Compass')+', back to top');
+    page.title=title+' · '+(branding.name||'Compass');
+    if(branding.logo){const img=page.createElement('img');img.src=branding.logo;img.alt='';page.querySelector('.brand-logo').replaceChildren(img);}
+    if(branding.footer)page.querySelector('.doc-footer>span').textContent=branding.footer;
+    const print=page.createElement('style');print.id='publication-print';
+    print.textContent='@page{size:'+options.print_paper+';margin:'+options.print_margin+'mm;}@media print{'+(options.print_chapters?'.publication-chapter+.publication-chapter{break-before:page;}':'')+'}';page.head.append(print);
     page.querySelector('.color-heading>span').textContent='Default: '+(PALETTE.find(([c])=>c===options.accent)?.[1]||options.accent.toUpperCase());
-    const config=page.createElement('script');config.textContent='window.__compassFeatures='+json(options)+';';page.querySelector('script').before(config);
+    const config=page.createElement('script');config.textContent='window.__compassIcons='+json(ICON_HTML)+';window.__compassFeatures='+json(options)+';';page.querySelector('script').before(config);
     for(const [key,selector] of Object.entries(HIDDEN))if(!options[key])for(const el of page.querySelectorAll(selector))el.setAttribute('hidden','');
     if(!options.outline)page.querySelector('.page-shell').className='page-shell no-outline';
     if(options.contents_open)page.querySelector('.contents-disclosure')?.setAttribute('open','');
     if(options.compact)page.body.classList.add('compact-layout');
+    const searchConfig=page.createElement('script');searchConfig.id='publication-data';
+    searchConfig.textContent='window.__compassSearch='+json(indexPage(page,'',title))+';window.__compassPage="";window.__compassPublication='+json(source)+';';page.querySelector('script').before(searchConfig);
+    if(!options.bookmarks)page.querySelector('#bookmarks-toggle').hidden=true;
     return '<!doctype html>\n'+page.documentElement.outerHTML;
   }
   function renderProject(value,{preview=false}={}) {
@@ -199,11 +217,14 @@ export function createRenderer(resources,window) {
     const docs=project.files.map((item,index)=>{
       if(typeof item.text!=='string')throw Error('Reconnect the source folder or import this Markdown file: '+(item.path||item.name));
       const prepared=prepare(item.text,{safe:project.safe,options:project.options,assets:item.assets});
+      const sourceHeadings=[...prepared.body.querySelectorAll(HEADING)];
+      const sourceIDs=new Set([...prepared.body.querySelectorAll('[id]')].map(el=>el.id));
       const name=item.path||item.name,title=item.title.trim()||getTitle(prepared.body,prepared.metadata,name);
       // A title override does not prevent removal of the matching source H1.
       if(item.title.trim())getTitle(prepared.body,prepared.metadata,name);
-      return {...prepared,item,title,name,prefix:'chapter-'+(index+1),output:String(index+1).padStart(2,'0')+'-'+slug(stem(name))+'.html'};
+      return {...prepared,item,title,name,sourceIDs,sourceHeadings,prefix:'chapter-'+(index+1),output:String(index+1).padStart(2,'0')+'-'+slug(stem(name))+'.html'};
     });
+    const issues=publicationChecks(docs,project,resolvePath,normalizePath);
     const maps=docs.map(doc=>new Map([...doc.body.querySelectorAll('[id]')].map(el=>[el.id,doc.prefix+'-'+el.id]))),names=new Map();
     docs.forEach((doc,i)=>{names.set(normalizePath(doc.name),i);names.set(normalizePath(doc.item.name),i);});
     const warnings=[];
@@ -226,7 +247,7 @@ export function createRenderer(resources,window) {
     if(project.mode==='combined') {
       const merged=fragment('');
       for(const doc of docs) {
-        const chapter=merged.ownerDocument.createElement('section');chapter.className='publication-chapter';chapter.id=doc.prefix;
+        const chapter=merged.ownerDocument.createElement('section');chapter.className='publication-chapter';chapter.id=doc.prefix;chapter.dataset.compassSource=doc.name;
         if(project.chapter_titles&&docs.length>1) {
           const headings=[...doc.body.querySelectorAll(HEADING)],base=Math.min(2,...headings.filter(h=>h.id).map(h=>Number(h.tagName[1])));
           const actual=headings.some(h=>h.id)?Math.min(...headings.filter(h=>h.id).map(h=>Number(h.tagName[1]))):base;
@@ -239,17 +260,25 @@ export function createRenderer(resources,window) {
       const metadata={...(docs.length===1?docs[0].metadata:{}),title:project.title||fallback};
       for(const key of ['subtitle','author'])if(project[key])metadata[key]=project[key];
       const source=docs.length===1?basename(docs[0].name):docs.length+' Markdown Files';
-      const html=renderDocument({source,markdown:docs.map(d=>d.markdown).join('\n'),metadata,body:merged,options,safe:project.safe,keepTitle:true});
+      const html=renderDocument({source,markdown:docs.map(d=>d.markdown).join('\n'),metadata,body:merged,options,safe:project.safe,keepTitle:true,branding:project.branding});
       pages.push({name:slug(project.name==='Untitled Publication'?metadata.title:project.name)+'.html',title:metadata.title,html});
     } else docs.forEach(doc=>{
       const marker=doc.body.ownerDocument.createElement('span');marker.id=doc.prefix;doc.body.prepend(marker);
       const metadata={...doc.metadata,title:doc.title};for(const key of ['subtitle','author'])if(project[key])metadata[key]=project[key];
-      const page=parse(renderDocument({source:doc.name,markdown:doc.markdown,metadata,body:doc.body,options,safe:project.safe,keepTitle:true}));
+      const page=parse(renderDocument({source:doc.name,markdown:doc.markdown,metadata,body:doc.body,options,safe:project.safe,keepTitle:true,branding:project.branding}));
+      page.querySelector('#document').dataset.compassSource=doc.name;
       const nav=page.createElement('nav');nav.className='publication-nav';nav.setAttribute('aria-label','Publication Pages');
       for(const peer of docs){const a=page.createElement('a');a.setAttribute('href',peer.output);a.textContent=peer.title;if(peer===doc)a.setAttribute('aria-current','page');nav.append(a);}
       page.querySelector('.hero').before(nav);pages.push({name:doc.output,title:doc.title,html:serialize(page)});
     });
-    return {project,pages,warnings:[...new Set(warnings)]};
+    const rendered=pages.map(page=>parse(page.html));
+    if(project.mode==='combined'&&docs.length===1)rendered[0].querySelector('#document').dataset.compassSource=docs[0].name;
+    const search=rendered.flatMap((page,i)=>indexPage(page,pages[i].name,pages[i].title));
+    rendered.forEach((page,i)=>{
+      page.querySelector('#publication-data').textContent='window.__compassSearch='+json(search)+';window.__compassPage='+json(pages[i].name)+';window.__compassPublication='+json(publicationKey(project))+';window.__compassPreview='+json(preview)+';';
+      pages[i].html=serialize(page);
+    });
+    return {project,pages,issues,warnings:[...new Set(warnings)]};
   }
   return {prepare,renderDocument,renderProject};
 }
