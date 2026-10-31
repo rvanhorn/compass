@@ -1,5 +1,5 @@
-(() => {
- 'use strict';
+import {transition} from './motion.js';
+import {icon} from './kit-icons.js';
  let active=null;
  const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
  function hsv(hex){
@@ -13,10 +13,12 @@
   const rgb=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
   return '#'+rgb.map(value=>Math.round((value+m)*255).toString(16).padStart(2,'0')).join('');
  }
- window.CompassColorPicker=trigger=>{
+ export function attachColorPicker(trigger){
+  // Swatches built by the workspace are attached directly and again by ui.js install(); a second picker would close the first.
+  if(trigger._compassPicker)return trigger._compassPicker;
   trigger.type='button';trigger.setAttribute('aria-haspopup','dialog');trigger.setAttribute('aria-expanded','false');
   const picker=document.createElement('div');picker.className='compass-color-picker';picker.hidden=true;picker.setAttribute('role','dialog');picker.setAttribute('aria-label',trigger.getAttribute('aria-label')+' Picker');
-  picker.innerHTML='<div class="ccp-heading"><strong>Choose a Color</strong><button type="button" aria-label="Close Color Picker">'+(window.CompassIcons||((name)=>window.__compassIcons[name]))('x')+'</button></div><div class="ccp-plane" aria-hidden="true"><i></i></div><div class="ccp-sliders"></div><label class="ccp-hex"><span>Hex</span><input type="text" maxlength="7" spellcheck="false" aria-label="Color Hex"></label>';
+  picker.innerHTML='<div class="ccp-heading"><strong>Choose a Color</strong><button type="button" aria-label="Close Color Picker">'+icon('x')+'</button></div><div class="ccp-plane" aria-hidden="true"><i></i></div><div class="ccp-sliders"></div><label class="ccp-hex"><span>Hex</span><input type="text" maxlength="7" spellcheck="false" aria-label="Color Hex"></label>';
   document.body.append(picker);
   const plane=picker.querySelector('.ccp-plane'),cursor=plane.querySelector('i'),text=picker.querySelector('input'),sliders={};
   let color={h:0,s:0,v:0},dragging=false;
@@ -37,18 +39,18 @@
   }
   function close({focus=false}={}){
    if(trigger.getAttribute('aria-expanded')!=='true')return;
-   window.CompassMotion.transition(picker,false,()=>picker.hidden=true);dragging=false;trigger.setAttribute('aria-expanded','false');if(active?.picker===picker)active=null;
+   transition(picker,false,()=>picker.hidden=true);dragging=false;trigger.setAttribute('aria-expanded','false');if(active?.picker===picker)active=null;
    if(focus)trigger.focus();
    trigger.dispatchEvent(new Event('change',{bubbles:true}));
   }
   trigger.addEventListener('click',()=>{
    if(trigger.getAttribute('aria-expanded')==='true'){close();return;}
-   active?.close();color=hsv(/^#[0-9a-f]{6}$/i.test(trigger.value)?trigger.value:'#2563eb');update();
+   active?.close();color=hsv(/^#[0-9a-f]{6}$/i.test(trigger.value)?trigger.value:'#2c55c9');update();
    picker.hidden=false;trigger.setAttribute('aria-expanded','true');active={picker,trigger,close};
    const bounds=trigger.getBoundingClientRect(),width=picker.offsetWidth,height=picker.offsetHeight;
    picker.style.left=clamp(bounds.right-width,8,Math.max(8,innerWidth-width-8))+'px';
    picker.style.top=clamp(bounds.bottom+height+8<=innerHeight?bounds.bottom+8:bounds.top-height-8,8,Math.max(8,innerHeight-height-8))+'px';
-   window.CompassMotion.transition(picker,true,()=>picker.hidden=false);
+   transition(picker,true,()=>picker.hidden=false);
    text.value=trigger.value.toUpperCase();sliders.h.focus();
   });
   picker.querySelector('.ccp-heading button').addEventListener('click',()=>close({focus:true}));
@@ -60,12 +62,11 @@
   plane.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.preventDefault();dragging=true;plane.setPointerCapture?.(event.pointerId);point(event);});
   plane.addEventListener('pointermove',event=>{if(dragging)point(event);});
   plane.addEventListener('pointerup',()=>dragging=false);plane.addEventListener('pointercancel',()=>dragging=false);
-  return {close};
- };
+  return trigger._compassPicker={close};
+ }
  const outside=event=>{if(active&&!active.picker.contains(event.target)&&!active.trigger.contains(event.target))active.close();};
  document.addEventListener('pointerdown',outside,true);document.addEventListener('click',outside,true);
  // Pointer events inside a preview iframe don't bubble into its workspace.
  window.addEventListener('blur',()=>active?.close());
  window.addEventListener('resize',()=>active?.close());
  document.addEventListener('scroll',event=>{if(active&&!active.picker.contains(event.target))active.close();},true);
-})();

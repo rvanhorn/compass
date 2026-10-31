@@ -1,19 +1,24 @@
 import {pairedAccent} from './design.mjs';
 // Version 1 project options are shared by the browser app and exported readers.
 export const DEFAULT_OPTIONS = Object.freeze({
-  accent:'#475569', font:17, width:930, radius:13, leading:1.75, background:'#f7f9fc',
-  dark_accent:'#64748b',dark_background:'#0d1117',logo_color:'#ffffff',dark_logo_color:'#ffffff',link_accents:true,surface:'',dark_surface:'',
+  accent:'#3b5bdb', font:17, width:930, radius:13, leading:1.75, background:'#ffffff',
+  dark_accent:'#8ea8ff',dark_background:'#14161b',logo_color:'#ffffff',dark_logo_color:'#ffffff',link_accents:true,surface:'',dark_surface:'',text:'',dark_text:'',
   letter_spacing:0,paragraph_spacing:18,heading_scale:1,
   body_font:'system',heading_font:'system',print_paper:'auto',print_margin:18,print_chapters:false,
-  customize:true, outline:true, contents:true, contents_open:false, search:true,
-  focus:true, reading_time:true, progress:true, filename:true, footer:true, logo:true,
+  customize:true, outline:true, contents:false, contents_open:true, search:true,
+  reading_time:true, progress:true, filename:true, footer:true, logo:true,
   metadata:true, subtitle:true, copy_code:true, section_links:true, image_zoom:true,
   table_sort:true, table_resize:true, table_scroll:true, table_rows:12, outline_depth:2,
   reading_speed:220, title_case:true, assessments:true, media:true, compact:false, remember:true,
-  bookmarks:true,resume:true,
 });
+// Focus mode, Bookmarks, and Resume Reading were removed on 2026-10-31; normalizeOptions drops their stored keys.
 export const FONT_STACKS=Object.freeze({system:'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',serif:'Georgia,"Times New Roman",serif',mono:'ui-monospace,SFMono-Regular,Consolas,monospace'});
-export const DESIGN_KEYS=Object.freeze(['accent','background','logo_color','dark_accent','dark_background','dark_logo_color','surface','dark_surface','font','width','leading','radius','compact','letter_spacing','paragraph_spacing','heading_scale','link_accents','body_font','heading_font']);
+export const DESIGN_KEYS=Object.freeze(['accent','background','logo_color','dark_accent','dark_background','dark_logo_color','surface','dark_surface','text','dark_text','font','width','leading','radius','compact','letter_spacing','paragraph_spacing','heading_scale','link_accents','body_font','heading_font']);
+// Saved projects store every default, so a color equal to a retired default follows the current one.
+// A publication that chose one of these exact colors on purpose also moves; that is the accepted cost.
+// #2563eb and its dark pair #608df0 were the demo's and an earlier default's blue.
+// #0969da, #579bf6, and #25282a were the GitHub-style defaults replaced on 2026-10-31 by the indigo set above.
+const RETIRED_DEFAULTS=Object.freeze({background:['#eef1f6'],dark_background:['#0f1422','#25282a'],accent:['#2c55c9','#2563eb','#0969da'],dark_accent:['#86a8ff','#608df0','#579bf6']});
 const ENUMS={body_font:Object.keys(FONT_STACKS),heading_font:Object.keys(FONT_STACKS),print_paper:['auto','A4','Letter']};
 const BOUNDS = {print_margin:[0,40],letter_spacing:[-.02,.08],paragraph_spacing:[8,32],heading_scale:[.85,1.35],font:[14,22],width:[640,1320],radius:[0,28],leading:[1.55,2.05],table_rows:[3,100],outline_depth:[1,4],reading_speed:[100,500]};
 export function normalizeOptions(value={}) {
@@ -28,6 +33,7 @@ export function normalizeOptions(value={}) {
     } else if(typeof fallback==='string' && typeof candidate==='string' && /^#[\da-f]{6}$/i.test(candidate))result[key]=candidate.toLowerCase();
   }
   if(!value?.dark_accent&&value?.accent&&/^#[\da-f]{6}$/i.test(value.accent)&&result.accent!==DEFAULT_OPTIONS.accent)result.dark_accent=pairedAccent(result.accent,'dark');
+  for(const [key,retired] of Object.entries(RETIRED_DEFAULTS))if(retired.includes(result[key]))result[key]=DEFAULT_OPTIONS[key];
   return result;
 }
 export const basename=path=>String(path).replace(/\\/g,'/').split('/').pop();
@@ -68,7 +74,7 @@ export function normalizeProject(value) {
     version:1,name:text(value.name??'Untitled Publication',300).trim()||'Untitled Publication',
     title:text(value.title,300),subtitle:text(value.subtitle,2000),author:text(value.author,300),
     id:text(value.id,100),branding:normalizeBranding(value.branding),
-    mode:value.mode==='separate'?'separate':'combined',safe:value.safe!==false,chapter_titles:value.chapter_titles!==false,
+    mode:['separate','heading'].includes(value.mode)?value.mode:'combined',safe:value.safe!==false,chapter_titles:value.chapter_titles!==false,
     options:normalizeOptions(value.options),files:files.map(item=>{
       if(!item || typeof item!=='object' || Array.isArray(item))throw Error('Invalid document entry.');
       const name=String(item.name||basename(item.path||'document.md'));

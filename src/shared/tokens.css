@@ -1,0 +1,34 @@
+/* Compass interface tokens: the Iris palette (DESIGN.md, approved 2026-10-31). Cool neutral grays and one iris accent.
+   Shared by the app and the exported reader; the reader remaps them to the publication's colours inside .cx.
+   The ui- prefix keeps them apart from publication variables such as --accent and --bg.
+   --ui-brand fills controls under white text; --ui-brand-text is the accent used as text, readable on every surface. */
+:root {
+  --ui-bg: #ffffff; --ui-panel: #f7f7f9; --ui-raised: #ffffff; --ui-ink: #1a1a22; --ui-ink-2: #3e3e4a; --ui-ink-3: #646472;
+  --ui-line: #d3d3dc; --ui-line-strong: #9c9cab; --ui-brand: #5b5bd6; --ui-brand-hover: #4c4cc2; --ui-on-brand: #ffffff;
+  --ui-brand-text: #4848c0; --ui-brand-soft: #5b5bd61a; --ui-focus: #5b5bd6; --ui-hover: #1a1a220a; --ui-press: #1a1a2214;
+  --ui-danger: #c9302c; --ui-on-danger: #ffffff; --ui-scrim: #0f0f1340; --ui-switch-off: #8a8a9a; --ui-desk: #f3f3f6; --ui-toolbar: #ececf1;
+  --ui-knob: #ffffff; --ui-mark: #fde68a; --ui-on-mark: #422006;
+  --ui-shadow: 0 1px 2px #1a1a220d, 0 16px 40px #1a1a221f; --ui-shadow-sm: 0 1px 2px #1a1a2214;
+  --ui-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ui-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ui-text: 14px; --ui-text-sm: 14px; --ui-text-xs: 14px; --ui-title: 16px;
+  --ui-h: 32px; --ui-h-sm: 28px; --ui-row: 40px; --ui-bar: 48px;
+  --ui-r-panel: 12px; --ui-r: 8px; --ui-r-sm: 6px;
+  --ui-ease: cubic-bezier(.2, .8, .2, 1); --ui-in: 220ms; --ui-out: 150ms; --ui-menu: 160ms;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ui-bg: #17171c; --ui-panel: #1d1d23; --ui-raised: #222229; --ui-ink: #ececf1; --ui-ink-2: #c3c3cf; --ui-ink-3: #9a9aaa;
+    --ui-line: #363640; --ui-line-strong: #5a5a68; --ui-brand: #6363e0; --ui-brand-hover: #5656d2; --ui-on-brand: #ffffff;
+    --ui-brand-text: #a9a9ff; --ui-brand-soft: #7b7bff24; --ui-focus: #8f8fff; --ui-hover: #ececf10d; --ui-press: #ececf117;
+    --ui-danger: #ff6b64; --ui-on-danger: #14141a; --ui-scrim: #00000099; --ui-switch-off: #6e6e7e; --ui-desk: #0f0f13; --ui-toolbar: #26262e;
+    --ui-shadow: 0 1px 2px #00000080, 0 16px 40px #00000099; --ui-shadow-sm: 0 1px 2px #00000080;
+  }
+}
+:root[data-theme="dark"] {
+  --ui-bg: #17171c; --ui-panel: #1d1d23; --ui-raised: #222229; --ui-ink: #ececf1; --ui-ink-2: #c3c3cf; --ui-ink-3: #9a9aaa;
+  --ui-line: #363640; --ui-line-strong: #5a5a68; --ui-brand: #6363e0; --ui-brand-hover: #5656d2; --ui-on-brand: #ffffff;
+  --ui-brand-text: #a9a9ff; --ui-brand-soft: #7b7bff24; --ui-focus: #8f8fff; --ui-hover: #ececf10d; --ui-press: #ececf117;
+  --ui-danger: #ff6b64; --ui-on-danger: #14141a; --ui-scrim: #00000099; --ui-switch-off: #6e6e7e; --ui-desk: #0f0f13; --ui-toolbar: #26262e;
+  --ui-shadow: 0 1px 2px #00000080, 0 16px 40px #00000099; --ui-shadow-sm: 0 1px 2px #00000080;
+}
