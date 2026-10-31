@@ -8,9 +8,9 @@ export {DEFAULT_OPTIONS,normalizeOptions,normalizeProject,parseFrontmatter};
 const HEADING='h1,h2,h3,h4,h5,h6';
 const SMALL=new Set('a an and as at but by for from in into nor of on or per than the to via with'.split(' '));
 const WORD=/\p{L}[\p{L}\p{N}_]*(?:[’'.-][\p{L}\p{N}_]+)*/gu;
-const PALETTE=[['#2563eb','Blue'],['#14b8a6','Teal'],['#f97316','Orange'],['#8b5cf6','Violet'],['#f59e0b','Amber'],['#ec4899','Pink']];
+const PALETTE=[['#3b5bdb','Indigo'],['#14b8a6','Teal'],['#f97316','Orange'],['#8b5cf6','Violet'],['#f59e0b','Amber'],['#ec4899','Pink']];
 const CLOCK=icon('clock');
-const HIDDEN={customize:'#settings-toggle,#settings-panel',outline:'.right-rail,#mobile-menu,#mobile-toc',contents:'.section-map',search:'#search-toggle,#search-modal,.rail-hint',focus:'#focus-toggle',reading_time:'.reading-time',progress:'.reading-progress',filename:'.brand-doc',footer:'.doc-footer',logo:'.brand-logo',metadata:'.meta',subtitle:'.hero>p',copy_code:'.copy-btn',section_links:'.heading-anchor'};
+const HIDDEN={customize:'#settings-toggle,#settings-panel',outline:'.right-rail,#mobile-menu,#mobile-toc',contents:'.section-map',search:'#search-toggle,#search-modal,.rail-hint',reading_time:'.reading-time',progress:'.reading-progress',filename:'.brand-doc',footer:'.doc-footer',logo:'.brand-logo',metadata:'.meta',subtitle:'.hero>p',copy_code:'.copy-btn',section_links:'.heading-anchor'};
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
 const plain=node=>node.textContent.trim().replace(/\s+/g,' ');
 const decode=value=>{try{return decodeURIComponent(value);}catch(_){return value;}};
@@ -170,15 +170,16 @@ export function createRenderer(resources,window) {
     }
     const subtitle=textValue(metadata.subtitle||metadata.description).trim(),author=textValue(metadata.author).trim(),date=textValue(metadata.date).trim();
     const words=(markdown.match(/[\p{L}\p{N}_]+/gu)||[]).length,minutes=Math.max(1,Math.round(words/options.reading_speed));
-    const logo=resources['shared/favicon.svg'].replaceAll('#2563eb',options.accent);
+    // The icon is drawn in the workspace's Iris accent; a publication shows it in its own accent.
+    const logo=resources['shared/favicon.svg'].replaceAll('#5b5bd6',options.accent);
     const favicon=branding.favicon||'data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(logo.replaceAll('#fff',options.logo_color))));
-    const rail=toc.length?'<aside class="right-rail" aria-label="Document outline"><div class="rail-title">On This Page</div><nav class="toc-list">'+headings+'</nav><div class="rail-hint"><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>K</kbd> to find a heading</div></aside>':'';
+    const rail=toc.length?'<aside class="right-rail contents-card cx cx-card" id="contents-card" aria-label="Contents"><div class="cx-head"><div class="cx-head-text"><h2>Contents</h2></div><button type="button" class="cx-btn icon sm" id="pin-contents" aria-pressed="false" aria-label="Dock Contents Beside the Page" title="Dock beside the page">'+icon('pin')+'</button><button type="button" class="cx-btn icon sm" id="close-contents" aria-label="Close Contents">'+icon('x')+'</button></div><div class="contents-scroll"><nav class="contents-pages" aria-label="Pages" hidden></nav><div class="rail-title">On This Page</div><nav class="toc-list">'+headings+'</nav><div class="rail-hint"><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>K</kbd> to find any text</div></div></aside>':'';
     const defaults=Object.fromEntries(['font','width','radius','leading','accent','dark_accent'].map(key=>[key,options[key]]));
     const media=options.media?((body.querySelector('.math-inline,.math-block')?resources['reader/assets/mathjax-loader.html']:'')+(body.querySelector('.mermaid')?resources['reader/assets/mermaid-loader.html']:'')):'';
     const substitutions={
       ...Object.fromEntries(Object.entries(ICON_HTML).map(([name,svg])=>['icon_'+name.replaceAll('-','_'),svg])),
       description:esc(subtitle||title),favicon_uri:favicon,logo_svg:logo,title:esc(title),source_name:esc(basename(source)),
-      css:resources['reader/styles.css']+'\n'+resources['shared/color-picker.css'],syntax_css:resources.syntax_css||'',picker_js:resources['shared/motion.js']+'\n'+resources['shared/color-picker.js'],ui_js:resources['reader/controls.js']+'\n'+(resources['reader/library.js']||''),
+      css:(resources['shared/tokens.css']||'')+'\n'+(resources['shared/ui.css']||'')+'\n'+resources['reader/styles.css']+'\n'+resources['shared/color-picker.css'],syntax_css:resources.syntax_css||'',picker_js:resources['shared/motion.js']+'\n'+resources['shared/color-picker.js'],ui_js:resources['reader/controls.js']+'\n'+(resources['reader/library.js']||''),
       headings_html:headings,swatch_html:PALETTE.map(([c,name])=>`<button type="button" data-color="${c}" title="${name}" aria-label="Set ${name} accent" aria-pressed="false"><span class="swatch-dot" style="background:${c}"></span><span>${name}</span></button>`).join(''),
       shell_class:'page-shell'+(toc.length?'':' no-outline'),subtitle_html:subtitle?'<p>'+esc(subtitle)+'</p>':'',
       meta_html:author||date?'<div class="meta">'+[author,date].filter(Boolean).map(v=>'<span class="meta-item">'+esc(v)+'</span>').join('')+'</div>':'',
@@ -188,7 +189,7 @@ export function createRenderer(resources,window) {
     const output=resources['reader/template.html'].replace(/\$\$|\$\{(\w+)\}/g,(match,key)=>match==='$$'?'$':substitutions[key]??'');
     const page=parse(output);
     page.documentElement.setAttribute('style',`--accent:${options.accent};--text-size:${options.font}px;--reader-max:${options.width}px;--radius:${options.radius}px;--body-leading:${options.leading};--bg:${options.background};--letter-spacing:${options.letter_spacing}em;--paragraph-gap:${options.paragraph_spacing}px;--heading-scale:${options.heading_scale};--light-bg:${options.background};--dark-bg:${options.dark_background};--dark-accent:${options.dark_accent};--light-logo-ink:${options.logo_color};--dark-logo-ink:${options.dark_logo_color}`);
-    for(const [key,property] of [['surface','--light-surface'],['dark_surface','--dark-surface']])if(options[key])page.documentElement.style.setProperty(property,options[key]);
+    for(const [key,property] of [['surface','--light-surface'],['dark_surface','--dark-surface'],['text','--light-text'],['dark_text','--dark-text']])if(options[key])page.documentElement.style.setProperty(property,options[key]);
     page.querySelector('meta[name="theme-color"]').content=options.accent;
     page.querySelector('link[rel="icon"]').type=favicon.slice(5,favicon.indexOf(';'));
     page.documentElement.style.setProperty('--body-font',FONT_STACKS[options.body_font]);
@@ -208,8 +209,19 @@ export function createRenderer(resources,window) {
     if(options.compact)page.body.classList.add('compact-layout');
     const searchConfig=page.createElement('script');searchConfig.id='publication-data';
     searchConfig.textContent='window.__compassSearch='+json(indexPage(page,'',title))+';window.__compassPage="";window.__compassPublication='+json(source)+';';page.querySelector('script').before(searchConfig);
-    if(!options.bookmarks)page.querySelector('#bookmarks-toggle').hidden=true;
     return '<!doctype html>\n'+page.documentElement.outerHTML;
+  }
+  function splitAtH1(doc) {
+    const parts=[{title:doc.title,nodes:[],split:false}];
+    for(const node of [...doc.body.childNodes]) {
+      if(node.nodeType===1&&node.tagName==='H1') {
+        const marker=doc.body.ownerDocument.createElement('span');if(node.id)marker.id=node.id;
+        parts.push({title:plain(node),nodes:[marker],split:true});continue;
+      }
+      parts.at(-1).nodes.push(node);
+    }
+    const kept=parts.filter(part=>part.split||part.nodes.some(node=>node.nodeType===1||node.textContent.trim()));
+    return kept.map(part=>{const body=fragment('');body.append(...part.nodes);return {...doc,body,title:part.title,split:part.split};});
   }
   function renderProject(value,{preview=false}={}) {
     const project=normalizeProject(value);
@@ -225,8 +237,23 @@ export function createRenderer(resources,window) {
       return {...prepared,item,title,name,sourceIDs,sourceHeadings,prefix:'chapter-'+(index+1),output:String(index+1).padStart(2,'0')+'-'+slug(stem(name))+'.html'};
     });
     const issues=publicationChecks(docs,project,resolvePath,normalizePath);
+    // Page per H1: each file becomes one page per H1, so ids, links, and pages below work on these parts.
+    if(project.mode==='heading') {
+      const parts=docs.flatMap(splitAtH1);
+      parts.forEach((part,index)=>{part.prefix='chapter-'+(index+1);part.output=String(index+1).padStart(2,'0')+'-'+slug(part.split?part.title:stem(part.name))+'.html';});
+      docs.splice(0,docs.length,...parts);
+    }
     const maps=docs.map(doc=>new Map([...doc.body.querySelectorAll('[id]')].map(el=>[el.id,doc.prefix+'-'+el.id]))),names=new Map();
-    docs.forEach((doc,i)=>{names.set(normalizePath(doc.name),i);names.set(normalizePath(doc.item.name),i);});
+    docs.forEach((doc,i)=>{for(const key of [normalizePath(doc.name),normalizePath(doc.item.name)])if(!names.has(key))names.set(key,i);});
+    // A fragment can name a heading that Page per H1 moved to another part of the same file.
+    const holder=(target,id)=>{if(maps[target].has(id))return target;const found=docs.findIndex((doc,i)=>doc.name===docs[target].name&&maps[i].has(id));return found<0?target:found;};
+    // Checks ran on whole files; point each issue at the page and id it lands on after any split.
+    for(const issue of issues) {
+      const original='chapter-'+(issue.file+1),anchor=issue.target.startsWith(original+'-')?issue.target.slice(original.length+1):'',item=project.files[issue.file];
+      let page=docs.findIndex((doc,i)=>doc.item===item&&(!anchor||maps[i].has(anchor)));if(page<0)page=docs.findIndex(doc=>doc.item===item);
+      issue.page=project.mode==='combined'?0:Math.max(0,page);
+      if(page>=0&&project.mode==='heading')issue.target=(anchor&&maps[page].get(anchor))||docs[page].prefix;
+    }
     const warnings=[];
     docs.forEach((doc,index)=>{
       for(const el of doc.body.querySelectorAll('[id]'))el.id=maps[index].get(el.id);
@@ -236,6 +263,7 @@ export function createRenderer(resources,window) {
         const parts=urlParts(href);let target=parts.path?undefined:index;
         if(parts.path)try{target=names.get(resolvePath(doc.name,decode(parts.path)));}catch(_){}
         if(target!==undefined) {
+          if(parts.fragment)target=holder(target,decode(parts.fragment));
           const fragment=parts.fragment?(maps[target].get(decode(parts.fragment))||docs[target].prefix):docs[target].prefix;
           link.setAttribute('href',(project.mode==='combined'?'#':docs[target].output+'#')+fragment);
         } else if(/\.(md|markdown|mdown)$/i.test(parts.path))warnings.push('Linked Markdown is not included: '+parts.path);
@@ -269,7 +297,10 @@ export function createRenderer(resources,window) {
       page.querySelector('#document').dataset.compassSource=doc.name;
       const nav=page.createElement('nav');nav.className='publication-nav';nav.setAttribute('aria-label','Publication Pages');
       for(const peer of docs){const a=page.createElement('a');a.setAttribute('href',peer.output);a.textContent=peer.title;if(peer===doc)a.setAttribute('aria-current','page');nav.append(a);}
-      page.querySelector('.hero').before(nav);pages.push({name:doc.output,title:doc.title,html:serialize(page)});
+      page.querySelector('.hero').before(nav);
+      const list=page.querySelector('.contents-pages');
+      if(list){list.hidden=false;for(const [index,peer] of docs.entries()){const a=page.createElement('a');a.setAttribute('href',peer.output);a.innerHTML='<b>'+(index+1)+'</b><span></span>';a.lastChild.textContent=peer.title;if(peer===doc)a.setAttribute('aria-current','page');list.append(a);}}
+      pages.push({name:doc.output,title:doc.title,html:serialize(page)});
     });
     const rendered=pages.map(page=>parse(page.html));
     if(project.mode==='combined'&&docs.length===1)rendered[0].querySelector('#document').dataset.compassSource=docs[0].name;

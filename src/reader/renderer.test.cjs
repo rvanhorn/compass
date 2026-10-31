@@ -18,8 +18,9 @@ const project=()=>({name:'Field Guide',files:[
   {name:'book/a.md',text:'# Alpha\n\n## Shared\n\n[Next](b.md#shared)\n\nA note[^1].\n\n[^1]: First note.'},
   {name:'book/b.md',text:'# Beta\n\n## Shared\n\n[Back](a.md#shared)\n\nA note[^1].\n\n[^1]: Second note.'},
 ]});
-test('all 50 options survive project round trips and invalid values use defaults',()=>{
-  assert.equal(Object.keys(api.DEFAULT_OPTIONS).length,50);
+test('all 49 options survive project round trips and invalid values use defaults',()=>{
+  assert.equal(Object.keys(api.DEFAULT_OPTIONS).length,49);
+  for(const removed of ['focus','bookmarks','resume'])assert.equal(api.normalizeOptions({[removed]:false})[removed],undefined,removed+' is no longer an option');
   const options={...api.DEFAULT_OPTIONS};
   for(const key of Object.keys(options))if(typeof options[key]==='boolean')options[key]=!options[key];
   Object.assign(options,{accent:'#EC4899',background:'#123456',font:21,width:1200,radius:0,leading:2,table_rows:3,outline_depth:4,reading_speed:400});
@@ -91,9 +92,9 @@ test('Contents, outline depth, Find data and display switches retain all heading
   assert.equal(page.querySelectorAll('.right-rail a[data-target]').length,5);
   assert(page.querySelector('h6 .heading-anchor'));
   assert.match(page.querySelector('#publication-data').textContent,/deepest/);
-  const switches=['customize','outline','contents','search','focus','reading_time','progress','filename','footer','logo','metadata','subtitle','copy_code','section_links'];
+  const switches=['customize','outline','contents','search','reading_time','progress','filename','footer','logo','metadata','subtitle','copy_code','section_links'];
   const disabled=render(markdown+'\n\n```js\nconst x=1;\n```',{metadata:{subtitle:'Subtitle',author:'Author'},options:Object.fromEntries(switches.map(key=>[key,false]))});
-  for(const selector of ['#settings-toggle','#settings-panel','.right-rail','.section-map','#search-toggle','#focus-toggle','.reading-time','.reading-progress','.brand-doc','.doc-footer','.brand-logo','.meta','.hero>p','.copy-btn','.heading-anchor'])assert(disabled.querySelector(selector)?.hidden,selector);
+  for(const selector of ['#settings-toggle','#settings-panel','.right-rail','.section-map','#search-toggle','.reading-time','.reading-progress','.brand-doc','.doc-footer','.brand-logo','.meta','.hero>p','.copy-btn','.heading-anchor'])assert(disabled.querySelector(selector)?.hidden,selector);
   assert(disabled.querySelector('.page-shell').classList.contains('no-outline'));
 });
 test('tables retain all rows, status badges and configurable scrolling',()=>{
@@ -210,4 +211,55 @@ test('design presets include appearance only and reject unrelated projects',asyn
  const preset=createDesignPreset({...api.DEFAULT_OPTIONS,font:21,body_font:'serif',search:false,print_margin:30},'House Style');
  assert.deepEqual(Object.keys(preset.options),DESIGN_KEYS);assert.equal(preset.options.search,undefined);assert.equal(preset.options.print_margin,undefined);assert.equal(preset.files,undefined);assert.equal(preset.options.body_font,'serif');
  assert.deepEqual(readDesignPreset(JSON.parse(JSON.stringify(preset))),preset);assert.throws(()=>readDesignPreset(project()));assert.throws(()=>readDesignPreset({...preset,version:2}));
+});
+test('page per H1 starts a page at each H1 and keeps links and search across the new pages',()=>{
+  const result=renderer.renderProject({name:'Split Guide',mode:'heading',files:[
+    {name:'a.md',text:'# Alpha\n\nOpening words.\n\n## Setup\n\nSee [the reference](#reference-notes).\n\n# Reference Notes\n\nA unique needle phrase.\n\n## Details\n\nMore.'},
+    {name:'b.md',text:'# Beta\n\n## Only Section\n\n[Back to setup](a.md#setup) and [notes](a.md#reference-notes).'},
+  ]});
+  assert.deepEqual(result.pages.map(page=>page.title),['Alpha','Reference Notes','Beta']);
+  assert.deepEqual(result.pages.map(page=>page.name),['01-a.html','02-reference-notes.html','03-b.html']);
+  const [alpha,notes,beta]=result.pages.map(page=>parse(page.html));
+  assert.equal(alpha.querySelector('.hero h1').textContent,'Alpha');
+  assert.equal(notes.querySelector('.hero h1').textContent,'Reference Notes');
+  assert.match(notes.querySelector('#document').textContent,/unique needle phrase/);
+  assert.doesNotMatch(alpha.querySelector('#document').textContent,/unique needle phrase/);
+  assert.equal(alpha.querySelector('#document a[href*="reference-notes"]').getAttribute('href'),'02-reference-notes.html#chapter-2-reference-notes');
+  assert.equal(beta.querySelector('#document a[href*="setup"]').getAttribute('href'),'01-a.html#chapter-1-setup');
+  assert.equal(beta.querySelectorAll('.publication-nav a').length,3);
+  assert.match(alpha.querySelector('#publication-data').textContent,/02-reference-notes\.html/);
+  assert.equal(api.exportPublication(result).mime,'application/zip');
+});
+test('page per H1 is a valid project mode and other values fall back to one page',async()=>{
+  const {normalizeProject}=await import('../shared/options.mjs');
+  assert.equal(normalizeProject({mode:'heading',files:[]}).mode,'heading');
+  assert.equal(normalizeProject({mode:'chapters',files:[]}).mode,'combined');
+});
+test('optional text colors reach exports for each theme and stay automatic when empty',()=>{
+  const page=render('# Title',{options:{text:'#1a2b3c',dark_text:'#E0E0E0'}});
+  assert.equal(page.documentElement.style.getPropertyValue('--light-text'),'#1a2b3c');
+  assert.equal(page.documentElement.style.getPropertyValue('--dark-text'),'#e0e0e0');
+  const automatic=render('# Title');
+  assert.equal(automatic.documentElement.style.getPropertyValue('--light-text'),'');
+  assert.match(automatic.querySelector('style').textContent,/--ink:var\(--light-text,/);
+  assert.equal(api.normalizeOptions({text:'red'}).text,'');
+});
+test('page per H1 points publication issues at the page that holds them',()=>{
+  const result=renderer.renderProject({name:'Split Checks',mode:'heading',files:[{name:'a.md',text:'# Alpha\n\nIntro.\n\n# Second Part\n\nMore words.\n\n![](missing.png)'}]});
+  const issue=result.issues.find(item=>/image/i.test(item.message));
+  assert(issue,'the missing image is reported');
+  assert.equal(issue.page,1);
+  assert.match(issue.target,/^chapter-2/);
+  assert(parse(result.pages[1].html).getElementById(issue.target),'the target id exists on that page');
+});
+// Requirement from the owner (2026-10-31): the reader's own controls (top bar, side nav, Customize) take the publication's
+// colours, so Randomize shows the designer the whole page. Every colour token they use must be remapped inside .cx.
+test('reader controls take every colour from the publication, not the workspace palette',()=>{
+  const css=['src/reader/styles.css','src/shared/ui.css','src/shared/color-picker.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
+  const mapping=fs.readFileSync(path.join(root,'src/reader/styles.css'),'utf8').match(/\.cx\{(--ui-[^}]*)\}/)[1];
+  const neutral=new Set(['danger','scrim','shadow','shadow-sm']),notColour=/^(ease|font|mono|h|h-sm|in|out|r|r-panel|r-sm|row|text|text-sm|text-xs|title)$/;
+  for(const name of new Set([...css.matchAll(/var\(--ui-([a-z0-9-]+)/g)].map(match=>match[1]))){
+    if(neutral.has(name)||notColour.test(name))continue;
+    assert.match(mapping,new RegExp('--ui-'+name+':'),'--ui-'+name+' follows the publication');
+  }
 });

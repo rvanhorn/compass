@@ -28,7 +28,7 @@ function page(initialScroll=0,sectionCount=0,options={}){
   w.requestAnimationFrame=callback=>frames.push(callback);
   const themeListeners=[];
   const themeMedia={matches:options.dark===true,addEventListener:(event,listener)=>{if(event==='change')themeListeners.push(listener);}};
-  w.matchMedia=()=>themeMedia;
+  w.matchMedia=query=>query.includes('prefers-reduced-motion')?{matches:options.reducedMotion===true}:themeMedia;
   if(options.theme)d.documentElement.dataset.theme=options.theme;
   w.HTMLElement.prototype.scrollIntoView=function(){};
   Object.defineProperty(w,'innerHeight',{value:724,writable:true});
@@ -38,9 +38,11 @@ function page(initialScroll=0,sectionCount=0,options={}){
   d.querySelector('.topbar').getBoundingClientRect=()=>({bottom:69});
   w.localStorage.setItem('compass-northstar-v1',JSON.stringify({fontFamily:'serif',font:19,accent:'#325fb4'}));
   if(options.features)w.__compassFeatures=options.features;
+  for(const [key,value] of Object.entries(options.storage||{}))w.localStorage.setItem(key,value);
+  if(options.width)Object.defineProperty(w,'innerWidth',{value:options.width,writable:true});
   for(const script of d.querySelectorAll('script:not([src])')){
     if(options.features && script.textContent.includes("'use strict'"))w.__compassFeatures=options.features;
-    if(sectionCount && script.textContent.includes('const outlineHeadings='))w.__compassTOC=synthetic;
+    if(sectionCount && /\boutlineHeadings\b/.test(script.textContent))w.__compassTOC=synthetic;
     w.eval(script.textContent);
   }
   function flush(){while(frames.length)frames.shift()();}
@@ -58,7 +60,7 @@ test('exports follow system appearance and keep independent reader accents for b
     accent.value='#ef4444';accent.dispatchEvent(new w.Event('input',{bubbles:true}));
     setSystemTheme(false);
     assert.equal(d.documentElement.dataset.theme,'light');
-    assert.equal(accent.value,'#2563eb');
+    assert.equal(accent.value,'#3b5bdb');
     accent.value='#16a34a';accent.dispatchEvent(new w.Event('input',{bubbles:true}));
     setSystemTheme(true);
     assert.equal(accent.value,'#ef4444');
@@ -70,14 +72,14 @@ test('preview appearance follows its parent theme instead of device changes',asy
   const {w,d,setSystemTheme}=page(0,0,{dark:true,theme:'light'});
   try{
     const accent=d.querySelector('#ctrl-accent');
-    assert.equal(accent.value,'#2563eb');
+    assert.equal(accent.value,'#3b5bdb');
     d.documentElement.dataset.theme='dark';
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(accent.value,w.__compassDefaults.dark_accent);
     setSystemTheme(false);assert.equal(d.documentElement.dataset.theme,'dark');
     d.documentElement.dataset.theme='light';
     await new Promise(resolve=>setImmediate(resolve));
-    assert.equal(accent.value,'#2563eb');
+    assert.equal(accent.value,'#3b5bdb');
   }finally{w.close();}
 });
 test('disabled reader features stay disabled and project preview ignores saved preferences',()=>{
@@ -125,13 +127,13 @@ test('outline follows scrolling in both directions and handles the document bott
   const {dom,w,d,headings,scroll}=page();
   try{
     function selected(index){
-      for(const selector of ['.right-rail .toc-list','#mobile-toc .toc-list']){
+      for(const selector of ['.right-rail .toc-list']){
         const active=d.querySelectorAll(selector+' a.active');
         assert.equal(active.length,1);
         assert.equal(active[0].dataset.target,headings[index].id);
         assert.equal(active[0].getAttribute('aria-current'),'location');
-        assert.equal(w.getComputedStyle(active[0]).borderLeftWidth,'1px');
-        assert.equal(w.getComputedStyle(active[0]).borderLeftStyle,'solid');
+        // Owner's rule (2026-10-31): the active item is marked by weight and colour, never a bar on its left edge.
+        assert.equal(w.getComputedStyle(active[0]).fontWeight,'600');assert.doesNotMatch(w.getComputedStyle(active[0]).boxShadow,/inset/);
         assert.equal(d.querySelectorAll(selector+' [aria-current]').length,1);
       }
       assert.equal(d.querySelectorAll('.section-map a.active').length,0);
@@ -150,7 +152,7 @@ test('outline follows scrolling in both directions and handles the document bott
 test('a long outline follows its active item without moving the document or fighting manual scrolling',()=>{
   const {dom,w,d,scroll}=page(0,51);
   try{
-    const rail=d.querySelector('.right-rail');
+    const rail=d.querySelector('.right-rail .contents-scroll');
     Object.defineProperty(rail,'clientHeight',{value:200});
     Object.defineProperty(rail,'clientTop',{value:1});
     Object.defineProperty(rail,'scrollHeight',{value:51*38});
@@ -175,23 +177,41 @@ test('outline initializes correctly when a section is already reached on load',(
     assert.equal(d.querySelector('.right-rail a.active').dataset.target,headings[1].id);
   }finally{dom.window.close();}
 });
-test('Contents starts collapsed and opens and closes with its native summary control',()=>{
+// Requirement from the owner (2026-10-31): the Contents panel is shown beside the page by default on wide screens.
+test('the Contents panel docks open by default on wide screens, and only a reader’s own pin choice is stored',()=>{
+  const wide=page(0,0,{width:1440});
+  try{
+    const card=wide.d.querySelector('.contents-card');
+    assert(wide.d.body.classList.contains('contents-docked'));assert(card.classList.contains('open'));
+    assert.equal(wide.w.localStorage.getItem('compass-contents-docked-v2'),null,'opening by default is not stored as a choice');
+    wide.d.querySelector('#pin-contents').click();assert.equal(wide.w.localStorage.getItem('compass-contents-docked-v2'),'0');
+  }finally{wide.w.close();}
+  const narrow=page(0,0,{width:900});
+  try{assert.equal(narrow.d.querySelector('.contents-card').classList.contains('open'),false,'narrow screens keep it closed');}finally{narrow.w.close();}
+  const floated=page(0,0,{width:1440,storage:{'compass-contents-docked-v2':'0'}});
+  try{assert.equal(floated.d.body.classList.contains('contents-docked'),false);assert.equal(floated.d.querySelector('.contents-card').classList.contains('open'),false,'a reader who floated it keeps that');}finally{floated.w.close();}
+  const legacy=page(0,0,{width:1440,storage:{'compass-contents-docked':'0'}});
+  try{assert(legacy.d.querySelector('.contents-card').classList.contains('open'),'the old key, written on every load, is ignored');}finally{legacy.w.close();}
+});
+// Requirements from the owner (2026-10-31): the Contents list under the title is off by default, since the side nav
+// covers it; turned on, it starts open, and readers can close it.
+test('the Contents list under the title is off by default, and when shown it starts open and closes with its summary',()=>{
   const {dom,w,d}=page();
   try{
+    assert.equal(d.querySelector('.section-map').hidden,true,'off by default');
     const details=d.querySelector('.contents-disclosure');
     const grid=details.querySelector('.section-map-grid');
-    assert.equal(details.open,false);
-    assert.notEqual(w.getComputedStyle(details.querySelector('.contents-show')).display,'none');
-    assert.equal(w.getComputedStyle(details.querySelector('.contents-hide')).display,'none');
-    assert.equal(w.getComputedStyle(grid).display,'none');
-    details.querySelector('summary').click();
     assert.equal(details.open,true);
     assert.equal(w.getComputedStyle(details.querySelector('.contents-show')).display,'none');
     assert.notEqual(w.getComputedStyle(details.querySelector('.contents-hide')).display,'none');
     assert.equal(w.getComputedStyle(grid).display,'grid');
     details.querySelector('summary').click();
     assert.equal(details.open,false);
+    assert.notEqual(w.getComputedStyle(details.querySelector('.contents-show')).display,'none');
     assert.equal(w.getComputedStyle(grid).display,'none');
+    details.querySelector('summary').click();
+    assert.equal(details.open,true);
+    assert.equal(w.getComputedStyle(grid).display,'grid');
   }finally{w.close();}
 });
 test('old serif preferences are dropped while other saved settings survive',()=>{
@@ -258,7 +278,7 @@ test('preferences show defaults, preserve current values, and clearly identify c
     assert.equal(d.querySelector('#ctrl-width-default').textContent,'930px');
     assert.equal(d.querySelector('#ctrl-leading-default').textContent,'1.75');
     assert.equal(d.querySelector('#ctrl-radius-default').textContent,'13px');
-    assert.equal(d.documentElement.style.getPropertyValue('--accent'),'#2563eb');
+    assert.equal(d.documentElement.style.getPropertyValue('--accent'),'#3b5bdb');
     const custom=d.querySelector('#ctrl-accent');custom.value='#ffdd00';custom.dispatchEvent(new w.Event('input',{bubbles:true}));
     assert.equal(d.querySelector('#accent-name').textContent,'Custom');
     assert.equal(d.querySelector('#accent-value').textContent,'#FFDD00');
@@ -266,7 +286,7 @@ test('preferences show defaults, preserve current values, and clearly identify c
     assert.equal(d.querySelectorAll('.swatches button[data-color].selected').length,0);
     d.querySelector('#reset-settings').click();
     assert.equal(d.querySelector('#ctrl-font-value').value,'17');
-    assert.equal(d.querySelector('#accent-name').textContent,'Default');
+    assert.equal(d.querySelector('#accent-name').textContent,'Indigo');
     assert.equal(d.querySelector('#print-button'),null);
   }finally{w.close();}
 });
@@ -285,14 +305,15 @@ test('reader color picker edits without closing Customize and dismisses on outsi
   trigger.click();d.querySelector('#document').click();assert.equal(picker.hidden,true);assert(!panel.classList.contains('visible'));
  }finally{w.close();}
 });
-test('Focus fades navigation before expanding content, and restores it when turned off',()=>{
- const {w,d}=page(),animations=[];
+test('Customize can stay pinned while reading and unpins without changing appearance',()=>{
+ const {w,d}=page();
  try{
-  w.HTMLElement.prototype.animate=function(){const animation={cancel(){},finish(){this.onfinish?.();}};animations.push(animation);return animation;};
-  for(const element of d.querySelectorAll('.section-map,.right-rail'))element.getBoundingClientRect=()=>({height:200,width:200});
-  d.querySelector('.main-column').getBoundingClientRect=()=>({left:0,top:0,height:600,width:d.body.classList.contains('focus-mode')?900:600});
-  const button=d.querySelector('#focus-toggle');button.click();assert.equal(button.getAttribute('aria-pressed'),'true');assert(!d.body.classList.contains('focus-mode'));
-  animations.slice().forEach(animation=>animation.finish());assert(d.body.classList.contains('focus-mode'));assert(d.querySelector('.section-map').hidden);
-  button.click();assert(!d.body.classList.contains('focus-mode'));assert.equal(d.querySelector('.section-map').hidden,false);assert.equal(button.getAttribute('aria-pressed'),'false');
+  const panel=d.querySelector('#settings-panel'),pin=d.querySelector('#pin-settings');
+  assert(pin,'Customize needs a pin control');
+  d.querySelector('#settings-toggle').click();pin.click();
+  assert.equal(pin.getAttribute('aria-pressed'),'true');assert(d.body.classList.contains('customize-docked'));
+  const font=d.querySelector('#ctrl-font').value;d.querySelector('#document').click();assert(panel.classList.contains('visible'));
+  pin.click();assert.equal(pin.getAttribute('aria-pressed'),'false');assert(!d.body.classList.contains('customize-docked'));assert.equal(d.querySelector('#ctrl-font').value,font);
+  d.querySelector('#document').click();assert(!panel.classList.contains('visible'));
  }finally{w.close();}
 });
