@@ -28,18 +28,20 @@
   },
   "packageManager": "pnpm@12.8.1",
   "scripts": {
-    "build": "node build-scripts/build.mjs",
-    "dev": "pnpm run build && node build-scripts/serve.mjs",
-    "preview": "node build-scripts/serve.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
     "previews": "node build-scripts/previews.mjs",
     "clean": "node build-scripts/clean.mjs",
     "pretest": "pnpm run build && pnpm run previews",
-    "test": "node --test",
+    "test": "node --test --test-concurrency=2",
     "check": "pnpm test"
   },
   "devDependencies": {
     "esbuild": "0.28.2",
-    "jsdom": "30.1.2"
+    "jsdom": "30.1.2",
+    "vite": "8.3.1",
+    "vite-plugin-singlefile": "2.3.3"
   },
   "dependencies": {
     "fflate": "0.8.3",

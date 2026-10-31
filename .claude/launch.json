@@ -1,0 +1,54 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "compass",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "preview"
+      ],
+      "port": 4173
+    },
+    {
+      "name": "design-mockups",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "/Users/rvanhorn/.claude/skills/design/scripts/serve.ts",
+        "docs/design/mockups",
+        "--port",
+        "4791"
+      ],
+      "port": 4791
+    },
+    {
+      "name": "design-kit",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "/Users/rvanhorn/.claude/skills/design/scripts/serve.ts",
+        ".",
+        "--port",
+        "4792"
+      ],
+      "port": 4792
+    },
+    {
+      "name": "df-design-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "/Users/rvanhorn/.claude/skills/df-design/scripts/serve.ts",
+        "/Users/rvanhorn/.claude/dotfiles/design/compass/workspace",
+        "--port",
+        "4793"
+      ],
+      "port": 4793
+    },
+    {
+      "name": "compass-dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "dev"
+      ],
+      "port": 5173
+    }
+  ]
+}
