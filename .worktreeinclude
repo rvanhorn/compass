@@ -1,0 +1,5 @@
+# Ignored files that Codex copies into each managed worktree, one gitignore-style pattern per line.
+# List only ignored files a fresh worktree needs to run, such as local tool settings.
+# Never list a secret: no .env files, keys, or tokens.
+# Codex copies an ignored AGENTS.override.md on its own; it does not need a line here.
+# Seeded once by the javascript profile; this project owns it from then on.

@@ -1,0 +1,7 @@
+# Project Codex config from the javascript profile of the dotfiles repository. The installer merges
+# this file into the project's copy: it adds missing tables and keys and never replaces or removes
+# one. Codex loads it only in a trusted project. Mirrors the servers in .mcp.json.
+
+[mcp_servers.codegraph]
+command = "codegraph"
+args = ["serve", "--mcp"]

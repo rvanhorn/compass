@@ -1,0 +1,24 @@
+{
+  "installedAt": "2026-10-14T05:15:44.151Z",
+  "source": "profile:javascript",
+  "files": [
+    ".claude/rules/browser.md",
+    ".claude/rules/css.md",
+    ".claude/rules/modules.md",
+    ".claude/rules/react.md",
+    ".claude/rules/typescript.md",
+    ".claude/rules/workspace.md",
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "digests": {
+    ".claude/rules/browser.md": "ac706d68d138bfcf1e86c0be9def1fb2a629ce30e44744095cf9fded494d4fdc",
+    ".claude/rules/css.md": "91b00f3c609bb2bfcb6e29c8f7fa3bce4add188effd6de84c80457085d6c5316",
+    ".claude/rules/modules.md": "ca7d09979f024657027457d6a54023067d453ef5c72b985c29b4850cd99a8ded",
+    ".claude/rules/react.md": "e751b5592ef48436398fa380eb9ac81374e31be4ac600d6ad7bb205d28302737",
+    ".claude/rules/typescript.md": "9f391a71e007b38558ad46046ec451dc211b92efebefd31c79299480ff0541e8",
+    ".claude/rules/workspace.md": "f7df0a84fa444ee1ee00b648b5f4cb555a0396f1de0fec25d47f38bed585ba02",
+    "AGENTS.md": "ee2368fc1b498b705a422a229c069c89aeca62275e482e4df27e119a803ffa76",
+    "CLAUDE.md": "faca13d15087054b005b253bdf6796f1a5d975ab05f77c0e9c1b5e2ff736fb1d"
+  }
+}
