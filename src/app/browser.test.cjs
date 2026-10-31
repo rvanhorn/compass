@@ -104,7 +104,7 @@ test('folder import embeds images and reimport refreshes the existing document',
     Object.defineProperty(d.querySelector('#folder-input'),'files',{value:[md,image]});
     d.querySelector('#folder-input').dispatchEvent(new w.Event('change'));
     for(let i=0;i<100&&!d.querySelector('.file-card');i++)await new Promise(r=>setTimeout(r,10));
-    d.querySelector('#start-preview').click();
+    // Preview starts by itself once a file is added.
     for(let i=0;i<100&&!d.querySelector('#preview-frame').srcdoc;i++)await new Promise(r=>setTimeout(r,10));
     assert.match(d.querySelector('#preview-frame').srcdoc,/data:image\/png;base64,aW1hZ2U=/);
     text='# Updated';d.querySelector('#folder-input').dispatchEvent(new w.Event('change'));

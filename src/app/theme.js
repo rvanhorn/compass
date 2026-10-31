@@ -10,7 +10,8 @@ function apply(){
  const trigger=document.querySelector('#workspace-theme');if(trigger)trigger.value=preference;
  const label=document.querySelector('#workspace-theme-label');if(label)label.textContent=preference[0].toUpperCase()+preference.slice(1);
  document.querySelectorAll('[data-theme-choice]').forEach(button=>button.setAttribute('aria-checked',String(button.dataset.themeChoice===preference)));
- const icon=document.querySelector('#workspace-theme-icon');if(icon&&window.CompassIcons)icon.innerHTML=window.CompassIcons({system:'monitor',light:'sun',dark:'moon'}[preference]);
+ // The workspace draws the trigger icon; this classic script cannot import the icon set.
+ document.dispatchEvent(new CustomEvent('compass-theme-preference',{detail:preference}));
  document.querySelectorAll('.publication-frame,#preview-frame').forEach(sendTheme);
 }
 function sendTheme(frame){frame.contentWindow?.postMessage({type:'compass-theme',theme:document.documentElement.dataset.theme},'*');}

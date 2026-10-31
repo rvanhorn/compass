@@ -19,7 +19,7 @@ async function setup({saved,dark=false,storage=true,matchMedia=true}={}){
 test('System follows device appearance changes until an explicit theme is chosen',async()=>{
  const {w,d,choose,system}=await setup({dark:true});
  try{
-  assert.equal(d.querySelector('#workspace-theme').value,'system');
+  assert.equal(d.querySelector('[data-theme-choice][aria-checked=true]').dataset.themeChoice,'system');
   system(false);assert.equal(d.documentElement.dataset.theme,'light');
   choose('dark');system(true);system(false);assert.equal(d.documentElement.dataset.theme,'dark');
   choose('light');system(true);assert.equal(d.documentElement.dataset.theme,'light');
@@ -30,10 +30,10 @@ test('explicit choices restore on startup and persist independently of publicati
  for(const saved of ['light','dark']){
   const {w,d,choose}=await setup({saved,dark:saved==='light'});
   try{
-   assert.equal(d.querySelector('#workspace-theme').value,saved);
+   assert.equal(d.querySelector('[data-theme-choice][aria-checked=true]').dataset.themeChoice,saved);
    w.localStorage.setItem('compass-project:/workspace','{"options":{"accent":"#2563eb"}}');
    choose(saved==='light'?'dark':'light');
-   assert.equal(w.localStorage.getItem('compass-theme'),d.querySelector('#workspace-theme').value);
+   assert.equal(w.localStorage.getItem('compass-theme'),d.querySelector('[data-theme-choice][aria-checked=true]').dataset.themeChoice);
    assert.equal(w.localStorage.getItem('compass-project:/workspace'),'{"options":{"accent":"#2563eb"}}');
    choose('system');assert.equal(w.localStorage.getItem('compass-theme'),'system');
   }finally{w.close();}
@@ -42,11 +42,11 @@ test('explicit choices restore on startup and persist independently of publicati
 test('invalid stored themes fall back to System and storage changes sync across windows',async()=>{
  const {w,d,system}=await setup({saved:'invalid',dark:true});
  try{
-  assert.equal(d.querySelector('#workspace-theme').value,'system');
+  assert.equal(d.querySelector('[data-theme-choice][aria-checked=true]').dataset.themeChoice,'system');
   w.dispatchEvent(new w.StorageEvent('storage',{key:'compass-theme',newValue:'light'}));
-  assert.equal(d.documentElement.dataset.theme,'light');assert.equal(d.querySelector('#workspace-theme').value,'light');
+  assert.equal(d.documentElement.dataset.theme,'light');assert.equal(d.querySelector('[data-theme-choice][aria-checked=true]').dataset.themeChoice,'light');
   w.dispatchEvent(new w.StorageEvent('storage',{key:'unrelated',newValue:'dark'}));assert.equal(d.documentElement.dataset.theme,'light');
-  w.dispatchEvent(new w.StorageEvent('storage',{key:null}));assert.equal(d.querySelector('#workspace-theme').value,'system');
+  w.dispatchEvent(new w.StorageEvent('storage',{key:null}));assert.equal(d.querySelector('[data-theme-choice][aria-checked=true]').dataset.themeChoice,'system');
   system(false);assert.equal(d.documentElement.dataset.theme,'light');
  }finally{w.close();}
 });

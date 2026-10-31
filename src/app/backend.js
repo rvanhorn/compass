@@ -1,11 +1,8 @@
 import {createRenderer,exportPublication,DEFAULT_OPTIONS,normalizeProject} from '../reader/renderer.mjs';
-import {normalizePath,resolvePath,basename,DESIGN_KEYS,createDesignPreset,readDesignPreset,normalizeBranding} from '../shared/options.mjs';
-import {createHistory} from './history.mjs';
-import {pairedAccent} from '../shared/design.mjs';
-import {icon} from '../shared/icons.mjs';
+import {normalizePath,resolvePath} from '../shared/options.mjs';
+import resources from 'virtual:compass-resources';
+import examples from 'virtual:compass-examples';
 
-const resources=__COMPASS_RESOURCES__;
-const examples=__COMPASS_EXAMPLES__;
 const MIMES={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',svg:'image/svg+xml',avif:'image/avif'};
 const MAX_BYTES=40*1024*1024;
 const external=value=>/^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(value);
@@ -102,9 +99,7 @@ export function createBrowserBackend({window,renderer,examples}) {
   };
   return backend;
 }
-window.CompassBrowser=createBrowserBackend({window,renderer,examples});
+export const backend=createBrowserBackend({window,renderer,examples});
 // Public, local-only API also makes the packaged renderer testable without HTTP.
+window.CompassBrowser=backend;
 window.CompassRenderer=renderer;
-window.CompassDesign={pairedAccent};
-window.CompassProject={normalizeProject,normalizeBranding,DESIGN_KEYS,createDesignPreset,readDesignPreset,createHistory};
-window.CompassIcons=icon;
