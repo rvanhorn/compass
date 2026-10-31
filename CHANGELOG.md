@@ -2,7 +2,7 @@
 
 All notable changes to Compass are recorded here, grouped by version and change type.
 
-## Unreleased
+## 2.0.0
 
 ### Changed
 
@@ -12,11 +12,11 @@ All notable changes to Compass are recorded here, grouped by version and change 
 - Every input is a Compass component: switches, a custom select, the Compass color picker for every color, and segmented controls. The workspace uses the Iris palette: cool grays with one iris accent, in light and dark.
 - The exported reader uses the same components: a top bar with Contents, Find, Customize, and Print, and a Contents side nav beside the page on wide screens; Find opens from the bar.
 - New publication defaults: an indigo accent on white for light, and a periwinkle accent on a deep blue-black for dark. Projects saved with the old defaults move to the new ones.
+- The workspace, the shared interface kit, and the reader tools are ES modules split by feature. `pnpm run dev` serves them unbundled through Vite with hot reload; `pnpm run build` still produces the single-file demo and offline app, and `pnpm run preview` serves that build.
 
 ### Removed
 
 - Focus mode, Bookmarks, and Resume Reading. The Contents side nav covers the navigation they offered.
-- The workspace, the shared interface kit, and the reader tools are ES modules split by feature. `pnpm run dev` serves them unbundled through Vite with hot reload; `pnpm run build` still produces the single-file demo and offline app, and `pnpm run preview` serves that build.
 
 ### Fixed
 
