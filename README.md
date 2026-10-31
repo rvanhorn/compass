@@ -19,22 +19,23 @@ The PNPM version is pinned in `package.json`; `pnpm-lock.yaml` records the depen
 
 Open `dist/compass.html`. Node.js is needed to build from source, not to use the finished app.
 
-Drop Markdown files or a folder into the setup screen. Arrange files in Files, choose output in Publish and appearance in Design, then click **Open Preview**. Settings move into a side drawer while the document takes the main pane. Changes update the preview; In Publish, choose the output and use **Download HTML** or **Download ZIP**. Multiple separate pages download as a ZIP.
+Drop Markdown files or a folder anywhere on the page. The publication opens at once and fills the window beside one rail on the left. The rail lists the work in order: **Sources**, **Pages**, **Style**, **Reader**, and **Details** each open a panel over the page, and changes update the page as you make them. Pin a panel to keep it open beside the page instead. **Publish**, at the bottom of the rail, checks the publication and downloads it as one HTML file or, for several pages, a ZIP. Press Ctrl/⌘ K to search every command, setting, and the publication's text. The eye button shows exactly what readers of the published file get; **Edit** brings the tools back.
 
-Use the custom Appearance menu in the header to choose **System**, **Light**, or **Dark** for the workspace and live preview. System follows your device’s appearance and is the default. Your choice is remembered in this browser independently of publication design and saved projects.
+Use the Appearance button in the rail to choose **System**, **Light**, or **Dark** for the workspace and live preview. System follows your device's appearance and is the default. Your choice is remembered in this browser independently of publication design and saved projects.
 
 ## Try the demo
 
 The build also creates **`dist/index.html`**, which opens directly in preview with [the showcase](demo/feature-guide.md) already selected. The demo can convert your files using the same controls as the downloadable app.
 
 ```bash
-pnpm run dev
+pnpm run build
+pnpm run preview
 # Open http://127.0.0.1:4173/
 ```
 
-Use `http://127.0.0.1:4173/compass.html` for the empty workspace. Stop the static preview server with **Ctrl+C**; set `PORT=8765` to choose another port. The server only serves files; conversion happens in the browser.
+Use `http://127.0.0.1:4173/compass.html` for the empty workspace. Stop the preview server with **Ctrl+C**; add `--port 8765` to choose another port. The server only serves the built files; conversion happens in the browser.
 
-The hosted demo will be available at **[rvanhorn.github.io/compass](https://rvanhorn.github.io/compass/)** after the first push to `main` and successful deployment. Its **File & Export → Download Offline App** command downloads the standalone app for offline use.
+The hosted demo will be available at **[rvanhorn.github.io/compass](https://rvanhorn.github.io/compass/)** after the first push to `main` and successful deployment. Its **Project menu → Download App** command downloads the standalone app for offline use.
 
 The demo includes Open Graph and Twitter sharing metadata, with a 1200 × 630 card at `og-card.png`. The build copies the committed PNG from `src/app/assets/`; its editable source is `src/app/assets/og-card.svg`. When changing the artwork, render the SVG to a 1200 × 630 PNG and commit both files. Sharing URLs use the `homepage` in `package.json`; update it when hosting elsewhere.
 
@@ -46,27 +47,27 @@ Run `pnpm run previews` to generate reading examples in `dist/previews/`. Open `
 
 ## Build a publication
 
-- **Choose content:** Drop files or folders, change chapter titles, and reorder documents.
-- **Choose output:** In Publish, select one combined HTML document or separate pages with navigation, and choose whether to show chapter titles.
-- **Set appearance:** Expand Theme Colors, Typography, or Layout. Customize light and dark accents, page and surface colors, and SVG icon colors, then adjust text size, letter and paragraph spacing, heading size, width, and corners. Linked accents automatically match hues across themes.
-- **Choose features:** Show or hide Customize, Contents, the outline, Find, Focus, reading time, progress, metadata, code-copy buttons, heading links, and more.
-- **Edit content:** Choose **Edit Markdown** from a file’s action menu for a source pane with live preview. Editing a linked file creates a local project copy and leaves its original unchanged.
-- **Reuse a design:** In Design, save or import a preset containing colors, typography, and layout without replacing content or reader features. Choose local sans, serif, or monospace families for body text and headings.
-- **Add branding:** Set a reader toolbar name, upload a logo and favicon, and customize the footer in Design → Publication Branding.
-- **Check and print:** Publish includes a persistent report for broken local links, missing images or alt text, heading gaps, and online media dependencies. Select paper size, margins, and chapter breaks; preview print styling or use **Print / Save PDF** for the complete publication.
-- **Save a project:** Download `compass.json` containing settings, Markdown snapshots, and supplied images. Reopen it on another device to continue. Browser storage keeps a draft when available; use **File & Export → Save Project** for a durable copy.
+- **Choose content:** In Pages, add files or folders, change file titles, and reorder files.
+- **Choose a page layout:** In Pages, choose **One Page** (every file on one continuous page), **Page per File**, or **Page per H1** (a new page at each H1 heading). With Page per H1, the Page Breaks list turns any H2 into an H1 and back; a linked file becomes a local copy when you change it.
+- **Set appearance:** In Design, set the accent, background, surface, text, and icon colors for the light and dark themes with the Compass color picker, or select **Randomize** for a matching set. Then adjust fonts, text size, letter and paragraph spacing, heading size, width, and corners. Matched accents keep the same hue across themes.
+- **Choose reader tools:** In Reader Tools, turn Contents, Find, Customize, reading time, progress, metadata, code-copy buttons, heading links, and more on or off. Each tool says what it adds.
+- **Edit content:** Choose **Edit Markdown** from a file's action menu for a source pane beside the page. Editing a linked file creates a local project copy and leaves its original unchanged.
+- **Reuse a design:** In Style, save or import a preset containing colors, typography, and layout without replacing content or reader tools. Choose local sans, serif, or monospace families for body text and headings.
+- **Add branding:** Set a reader toolbar name, upload a logo and favicon, and customize the footer in Details, under Branding.
+- **Check and print:** Publish includes a persistent report for broken local links, missing images or alt text, heading gaps, and online media dependencies. Select paper size, margins, and chapter breaks; preview print styling or use **Print or Save PDF** for the complete publication.
+- **Save a project:** Download `compass.json` containing settings, Markdown snapshots, and supplied images. Reopen it on another device to continue. Browser storage keeps a draft when available; choose **Save Project** (Ctrl/⌘ S) in Details, under Project File, for a durable copy.
 
-Use **Undo** and **Redo** in the header for file, title, source, and setting changes. Ctrl/⌘ Z and Ctrl/⌘ Shift Z work outside text fields and inside the Markdown source editor; ordinary text fields keep their native editing shortcuts. History is kept for the current session and starts fresh when opening a project or example.
+Use **Undo** and **Redo** in the rail for file, title, source, and setting changes. Ctrl/⌘ Z and Ctrl/⌘ Shift Z work outside text fields and inside the Markdown source editor; ordinary text fields keep their native editing shortcuts. History is kept for the current session and starts fresh when opening a project or example.
 
 Import a folder to include local images and preserve links between its Markdown files. Combined output gives chapters distinct anchors and rewrites links between included documents. Importing the same source name again updates its contents.
 
 In browsers with folder-access support, **Link Folder** links files to a folder you select. Linked files are reread during preview and export, with preview checks every four seconds. Other browsers offer folder import instead. Reconnect the folder after reopening a draft or an older project containing linked paths. Saving a project in the browser creates a portable snapshot of those linked files.
 
-See [all 50 options and project fields](docs/options.md) for defaults, ranges, metadata, and examples. The bundled `.compass.json` examples contain repository-relative paths; select the repository folder when opening them manually, or use the built-in example buttons.
+The bundled `.compass.json` examples contain repository-relative paths; select the repository folder when opening them manually, or use the built-in example buttons.
 
 ## Reading and Markdown
 
-Readers can customize the document, search text, headings, and code across all chapters with **Ctrl/⌘ K**, enter Focus mode, copy code or section links, enlarge images, and print. Contents starts collapsed; the side outline is visible by default. Find shows highlighted snippets and jumps to the matching passage, including in separate exported pages, without an online search service. Readers can bookmark sections and resume at their last section; reading state stays local to the browser and publication when Reader Preferences is enabled. Previews do not persist reader state.
+Readers can customize the document, search text, headings, and code across all chapters with **Ctrl/⌘ K**, copy code or section links, enlarge images, and print. On wide screens the Contents list sits beside the page as a side nav, and the shorter list under the title is off unless you turn it on in Reader. Find shows highlighted snippets and jumps to the matching passage, including in separate exported pages, without an online search service.
 
 Tables support sorting, column resizing, and bounded scrolling for long tables. Print includes all rows.
 
@@ -77,23 +78,25 @@ The app, conversion, layout, and controls work offline. Mermaid and MathJax load
 ## Develop
 
 ```bash
+pnpm run dev         # Serve the workspace from src/ with hot reload at http://127.0.0.1:5173/
 pnpm run check       # Build app and previews, then run all checks
 pnpm run clean       # Remove generated dist/ output
 ```
 
-`pnpm test` also builds its required fixtures automatically. See [CONTRIBUTING.md](CONTRIBUTING.md) for structure and review guidance; record changes in [CHANGELOG.md](CHANGELOG.md).
+`pnpm run dev` loads the source as separate ES modules through Vite; only `pnpm run build` produces the single-file `dist/index.html` and `dist/compass.html`. `pnpm test` also builds its required fixtures automatically. See [CONTRIBUTING.md](CONTRIBUTING.md) for structure and review guidance; record changes in [CHANGELOG.md](CHANGELOG.md).
 
 ```text
 compass/
 ├── src/
-│   ├── app/               Browser workspace, controls, styles, template, tests
-│   ├── reader/            Markdown renderer, reader controls, styles, template, tests
-│   │   └── assets/        Optional MathJax and Mermaid loaders
-│   └── shared/            Project options, path helpers, favicon
-├── build-scripts/         Build, preview generation, static server, cleanup
+│   ├── app/               Browser workspace modules, styles, template, tests
+│   ├── reader/            Markdown renderer, styles, template, tests
+│   │   ├── assets/        Optional MathJax and Mermaid loaders
+│   │   └── runtime/       Reader tools, bundled into each exported page
+│   └── shared/            Project options, path helpers, interface kit, favicon
+├── build-scripts/         Vite plugin, reader resources, preview generation, cleanup
+├── vite.config.mjs        Development server and single-file build
 ├── demo/                  Feature guide, publishing checklist, saved projects
 │   └── assets/            Publishing workflow illustration
-├── docs/                  Complete options reference
 ├── .github/workflows/     Checks and GitHub Pages deployment from main
 ├── package.json           JavaScript dependencies, PNPM version, development commands
 ├── pnpm-lock.yaml         Locked dependency versions

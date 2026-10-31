@@ -8,7 +8,7 @@ pnpm run check
 pnpm run dev
 ```
 
-The static demo is at `http://127.0.0.1:4173/`; the empty app is at `/compass.html`. You can also open `dist/compass.html` directly without a server. Conversion must work in both contexts.
+`pnpm run dev` serves the workspace from `src/` as separate ES modules with hot reload at `http://127.0.0.1:5173/`; the empty app is at `/compass.html`. `pnpm run build` produces the single-file demo and app, and `pnpm run preview` serves them at `http://127.0.0.1:4173/`. You can also open `dist/compass.html` directly without a server. Conversion must work in all of these contexts.
 
 `pnpm test` builds the app and reading fixtures before running the checks. Run `pnpm run clean` to remove generated output; dependencies and local projects are preserved.
 
@@ -16,26 +16,29 @@ Use `pnpm add <package>` or `pnpm add -D <package>` to change dependencies and c
 
 ## Where to work
 
-`src/` contains the app and exported reader implementation, with `.test.cjs` checks beside the code they exercise. `build-scripts/` contains development tools that build, serve, generate previews, and clean output. `demo/` contains the feature guide, publishing checklist, and saved projects used by the demo and tests. `docs/` contains reference documentation for people configuring publications.
+`src/` contains the app and exported reader implementation, with `.test.cjs` checks beside the code they exercise. `build-scripts/` contains the Vite plugin, reader resource loading, preview generation, and cleanup. `demo/` contains the feature guide, publishing checklist, and saved projects used by the demo and tests.
 
 | Area | Files |
 | --- | --- |
 | Markdown parsing and extensions | `src/reader/markdown.mjs` |
 | Document transforms, publication links and exports | `src/reader/renderer.mjs` |
 | Project format, renderer defaults and path helpers | `src/shared/options.mjs` |
-| Browser file access, portable projects and local actions | `src/app/browser.mjs` |
-| Workspace controls, styles and layout | `src/app/controls.js`, `styles.css`, `template.html` |
-| Exported reader controls, styles and layout | `src/reader/controls.js`, `styles.css`, `template.html` |
+| Browser file access, portable projects and local actions | `src/app/backend.js` |
+| Workspace controls, styles and layout | `src/app/` modules (entry `main.js`, startup `app.js`, shared state `state.js`), `styles.css`, `template.html` |
+| Shared interface kit (motion, color picker, selects, menus) | `src/shared/motion.js`, `color-picker.js`, `ui.js`, `src/app/menus.js` |
+| Exported reader controls, styles and layout | `src/reader/runtime/` (entry `index.js`), `styles.css`, `template.html` |
 | Optional diagram and equation loaders | `src/reader/assets/` |
 | Shared icon | `src/shared/favicon.svg` |
-| Standalone HTML bundling and static preview | `build-scripts/` |
-| Examples and configuration | `demo/`, `docs/options.md` |
+| Standalone HTML bundling | `vite.config.mjs`, `build-scripts/` |
+| Examples and configuration | `demo/` |
 | Packaged app and workspace checks | `src/app/` |
 | Renderer and reader interaction checks | `src/reader/` |
 
 The build embeds dependencies, templates, and assets into each app HTML file. Keep URLs relative for repository subpaths. Add package licenses to the generated notices when adding bundled dependencies. Do not add runtime conversion endpoints: browser conversion must work without a server.
 
-The reader renderer replaces `${name}` template placeholders and uses `$$` for a literal dollar sign. Templates, styles, and controls live beside the source that uses them. `build-scripts/resources.mjs` loads reader resources for both the build and renderer checks; the build embeds the app resources separately.
+The reader renderer replaces `${name}` template placeholders and uses `$$` for a literal dollar sign. Templates, styles, and controls live beside the source that uses them. `build-scripts/resources.mjs` loads reader resources for both the build and renderer checks. It bundles the reader runtime and the shared kit into classic scripts, because each exported page carries them inline and cannot import modules. `build-scripts/vite-compass.mjs` gives the workspace those resources as a virtual module and assembles the single-file pages.
+
+App modules import shared state from `src/app/state.js` and change it only through its setters. Top-level code in an app module may register listeners but must not call functions from other app modules, because the modules import each other. `previewNavigation` in `src/app/preview.js` is sent into the preview frame as text, so it must not use anything declared outside its own body.
 
 Edit source Markdown in `demo/` rather than generated HTML. `pnpm run previews` regenerates reading examples in `dist/previews/`. All generated files belong in ignored `dist/`; keep local publication exports in ignored `output/` and personal projects outside the source directories.
 

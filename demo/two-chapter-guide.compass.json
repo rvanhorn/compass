@@ -9,7 +9,7 @@
   "chapter_titles": true,
   "options": {
     "accent": "#14b8a6",
-    "contents": true,
+    "contents": false,
     "contents_open": true,
     "outline_depth": 2
   },

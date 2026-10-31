@@ -8,9 +8,9 @@
   "safe": true,
   "chapter_titles": false,
   "options": {
-    "accent": "#475569",
-    "contents": true,
-    "contents_open": false,
+    "accent": "#3b5bdb",
+    "contents": false,
+    "contents_open": true,
     "outline": true,
     "outline_depth": 2,
     "remember": false

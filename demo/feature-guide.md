@@ -9,7 +9,7 @@ date: 2026-10-11
 
 Compass turns Markdown into a document you can read, customize, and share. This example is the source for the bundled showcase and the starting document for the local demo.
 
-Try **Customize**, search text and code with **Ctrl/⌘ K**, and switch on **Focus**. Expand Contents to jump between sections. Use **Bookmarks** to save a section locally, or **Print** to open your browser's print dialog.
+Try **Customize**, and search text and code with **Ctrl/⌘ K**. Use the Contents list beside the page to jump between sections, or **Print** to open your browser's print dialog.
 
 ## Start with a document
 
@@ -72,7 +72,6 @@ Click a header to sort. Drag its right edge to resize a column, or focus the res
 | Contents | Navigation | Expand the opening chapter directory |
 | Side outline | Navigation | Jump to nearby sections |
 | Find | Navigation | Press Ctrl/⌘ K |
-| Focus | Reading | Hide navigation for focused reading |
 | Progress | Reading | Watch the reading indicator |
 | Reading time | Reading | See the estimate beside the title |
 | Code copying | Interaction | Copy the Python example |
@@ -182,6 +181,6 @@ Find searches paragraphs and code as well as headings. Separate exported pages i
 
 ## Make it yours
 
-The builder controls whether readers see Customize, Contents, the outline, search, focus, metadata, reading time, code copying, section links, and the footer. You can also choose layout defaults, table behavior, heading case, image zoom, and optional media.
+The builder controls whether readers see Customize, Contents, the outline, search, metadata, reading time, code copying, section links, and the footer. You can also choose layout defaults, table behavior, heading case, image zoom, and optional media.
 
 Use this file to explore the controls, or add `demo/publishing-checklist.md` as a second chapter to try combined output. See the repository README for installation and the options reference for the complete configuration.

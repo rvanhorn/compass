@@ -2,6 +2,34 @@
 
 All notable changes to Compass are recorded here, grouped by version and change type.
 
+## Unreleased
+
+### Changed
+
+- One interface for writing and reading: the publication fills the window beside one rail on the left that holds every tool. The setup screen, the bottom dock, the settings drawer, and the framed preview are gone.
+- The rail lists the sections in working order (Sources, Pages, Style, Reader, Details) and ends with Publish. Each section opens a panel over the page; pin it to keep it beside the page. In Read, the rail shows the reader's own tools.
+- Settings are flat rows with a description under each one. A reader tool's fine-tuning setting sits under the tool and is disabled while the tool is off, replacing the separate Fine Tuning group.
+- Every input is a Compass component: switches, a custom select, the Compass color picker for every color, and segmented controls. The workspace uses the Iris palette: cool grays with one iris accent, in light and dark.
+- The exported reader uses the same components: a top bar with Contents, Find, Customize, and Print, and a Contents side nav beside the page on wide screens; Find opens from the bar.
+- New publication defaults: an indigo accent on white for light, and a periwinkle accent on a deep blue-black for dark. Projects saved with the old defaults move to the new ones.
+
+### Removed
+
+- Focus mode, Bookmarks, and Resume Reading. The Contents side nav covers the navigation they offered.
+- The workspace, the shared interface kit, and the reader tools are ES modules split by feature. `pnpm run dev` serves them unbundled through Vite with hot reload; `pnpm run build` still produces the single-file demo and offline app, and `pnpm run preview` serves that build.
+
+### Fixed
+
+- Each color swatch in the workspace opened two color pickers, so the swatch reported itself closed while its picker was open.
+
+### Added
+
+- Page per H1 layout: a new page starts at each H1. The Page Breaks list turns any H2 into an H1 and back, and links, search, and contents follow the new pages.
+- Read mode shows exactly what readers get, with an Edit button to return.
+- A command palette (Ctrl/⌘ K) for commands, every setting, and the publication's text.
+- Text color settings for the light and dark themes, and a Randomize button that picks a matching set of colors for both themes. Each press varies the background mood (clean, tinted, deep, or soft), how the background hue relates to the accent, and the accent itself; it keeps the candidate that looks most different from the last twelve sets, and keeps text and accents readable. The reader's own top bar, side nav, and Customize panel take these colors too.
+- Preview width (Fit Window, Tablet, Phone) and Keyboard Shortcuts in the More menu.
+
 ## 1.0.1
 
 ### Added
